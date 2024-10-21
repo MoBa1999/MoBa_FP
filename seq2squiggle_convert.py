@@ -47,22 +47,6 @@ def seq_to_fast5(input_fasta_file, output_fast5,):
     s5.close()
 
     print(f"Conversion completed. Output file: {output_fast5}")
-    input("Press key to push file into git")
-    command = ["git", "add", output_fast5]
-    command_2 = ["git", "commit", "-m", "Automated push of fast5 file"]
-    command_3 = ["git", "push"]
-    try:
-        # Ausführen des Befehls und Erfassen der Ausgabe
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
-        print(result.stdout)
-        result = subprocess.run(command_2, capture_output=True, text=True, check=True)
-        print(result.stdout)
-        result = subprocess.run(command_3, capture_output=True, text=True, check=True)
-        print(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print("Fehler bei der Ausführung des Befehls:")
-        print(e.stderr)
-
 
 
 input_fasta_file = 'simulator_test.fasta'
