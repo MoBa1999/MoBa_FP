@@ -66,5 +66,5 @@ def seq_to_fast5(input_fasta_file, output_fast5,):
 
 
 input_fasta_file = 'simulator_test.fasta'
-output_fast5_file = 'ChandakTest/simu_oligo_5_coverage_30.fast5'
+output_fast5_file = 'ChandakTest/simu_oligo_1_coverage_35.fast5'
 seq_to_fast5(input_fasta_file, output_fast5_file)
