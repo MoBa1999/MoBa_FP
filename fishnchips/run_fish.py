@@ -83,6 +83,6 @@ def run(config_file, run_name):
     test_controller.test(trained_model)
 
 
-config_file = "configs\\fish08-250-25H-5CNN-4B-3MPK.json"
+config_file = "configs/fish08-250-25H-5CNN-4B-3MPK.json"
 run_name = "Test_Experiment"
 run(config_file, run_name)
