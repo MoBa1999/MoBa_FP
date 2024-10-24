@@ -8,8 +8,10 @@ from utils.Other import labelBaseMap
 class BacteriaDataLoader:
     def __init__(self, filename):
         self._filename = filename
+        
 
     def load_read_ids(self):
+        print("Bacteria Dataloader reads with files at: " + self._filename)
         with h5py.File(self._filename, 'r') as h5file:
             return list(h5file['Reads'].keys())   
 
