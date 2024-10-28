@@ -1,0 +1,26 @@
+{
+    "name": "pytorch-base-rb",
+    "image": "base-rb/base-rb:funcoords",
+    "initializeCommand": "nvidia-docker build -f .devcontainer/Dockerfile -t base-rb/base-rb:funcoords .",
+    "customizations": {
+      "vscode": {
+        "extensions": [
+          "eamodio.gitlens",
+          "ms-python.python"
+        ]
+      }
+    },
+    "mounts": [
+      "type=bind,source=/home/riccardo/,target=/riccardo/",
+      "type=bind,source=/media/,target=/media/",
+      "type=bind,source=/srv/,target=/srv/"
+    ],
+    "runArgs": [
+      "--runtime=nvidia",
+      "--name=pytorch-base-rb",
+      "--memory=64g",
+      "--cpus=16",
+      "--shm-size=64g"],
+    "shutdownAction": "none",
+    "forwardPorts": [3000]
+}
