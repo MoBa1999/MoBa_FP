@@ -1,5 +1,5 @@
 import tensorflow as tf
-
+penis
 from Files.ConvBlock import ConvolutionBlock
 #from Files.Transformer import Transformer
 
@@ -14,7 +14,7 @@ class Test_Model(tf.keras.Model):
         self.max_pool_layer_idx = max_pool_layer_idx
         self.max_pool = tf.keras.layers.MaxPooling1D(pool_size=2, name="max_pool_1D")
 
-        self.cnn_blocks = [ConvolutionBlock([1,3,1], d_model, i) for i in range(num_cnn_blocks)]
+        self.cnn_blocks = [ConvolutionBlock([1,10,10,1], d_model, i) for i in range(num_cnn_blocks)]
 
         self.feed_forward = tf.keras.layers.Dense(1312, activation='relu', name="feed_forward_layer")
         self.reshape_layer = tf.keras.layers.Reshape((328, 4), name="reshape_layer")
