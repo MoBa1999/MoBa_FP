@@ -2,7 +2,6 @@ import subprocess
 import h5py
 import pyslow5
 import os
-from blue_crab import Slow5ToPod5
 
 
 def process_fasta(input_file, output_prefix):
@@ -76,45 +75,36 @@ def blow5_to_fast5_multiple(blow5_dir, output_dir):
         print(f"Conversion completed for file {blow_file}. Output file: {output_fast5}")
 
 
+def blow5_to_pod5(input_folder, output_folder):
+    # Ensure output folder exists
+    os.makedirs(output_folder, exist_ok=True)
 
-def blow5_to_pod5_multiple(blow5_dir, output_dir):
-  """
-  Converts multiple blow5 files in a directory to pod5 format.
+    # Process each .blow5 file in the input folder
+    for file_name in os.listdir(input_folder):
+        if file_name.endswith('.blow5'):
+            input_path = os.path.join(input_folder, file_name)
+            output_path = os.path.join(output_folder, file_name.replace('.blow5', '.pod5'))
 
-  Args:
-      blow5_dir (str): Path to the directory containing blow5 files.
-      output_dir (str): Path to the directory where pod5 files will be saved.
-  """
-  
-  # List all files in the blow5 directory
-  blow5_files = [f for f in os.listdir(blow5_dir) if f.endswith('.blow5')]
+            # Open BLOW5 file
+            with pyslow5.Slow5File(input_path, 'r') as blow5_file:
+                # Create POD5 file
+                with pyslow5.Slow5File(output_path, 'w') as pod5_file:
+                    # Copy each read
+                    for read in blow5_file.reads():
+                        pod5_file.write_read(read)
 
-  # Process all .blow5 files
-  for blow_file in blow5_files:
-    blow_file_path = os.path.join(blow5_dir, blow_file)
-    output_pod5 = os.path.join(output_dir, os.path.splitext(blow_file)[0] + '.pod5')  # Remove extension and add .pod5
-
-    # Convert using Slow5ToPod5 converter
-    converter = Slow5ToPod5(blow_file_path, output_pod5)
-    converter.convert()
-
-    print(f"Conversion completed for file {blow_file}. Output file: {output_pod5}")
-
-# Example usage
-blow5_dir = "/path/to/your/blow5/files"
-output_dir = "/path/to/output/pod5/files"
-blow5_to_pod5_multiple(blow5_dir, output_dir)
-
+            print(f"Converted {input_path} to {output_path}")
 # Beispielaufruf
 
 input_file = "oligos_combined.txt"
 output_prefix = "Training_Data/training_file"
 
 blow5_dir = 'Training_Data/'
-output_dir = 'Fast5_Training'
+output_dir = 'Pod5_Training/'
 
 
 #Run only for creating fasta files
 #process_fasta(input_file, output_prefix)
 #run_squigulator()
-blow5_to_fast5_multiple(blow5_dir, output_dir)
+#blow5_to_fast5_multiple(blow5_dir, output_dir)
+blow5_to_pod5(blow5_dir, output_dir)
