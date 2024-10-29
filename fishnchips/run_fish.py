@@ -82,10 +82,7 @@ def run(config_file, run_name):
     trained_model = training_controller.train()
     test_controller.test(trained_model)
 
-if __name__ == "__main__":
-    config_file = sys.argv[1]
-    if len(sys.argv) > 1:
-        run_name = sys.argv[2]
-    else:
-        run_name = datetime.datetime.now().strftime('%m%d%Y-%H%M%S')
-    run(config_file, run_name)
+
+config_file = "configs/fish08-250-25H-5CNN-4B-3MPK.json"
+run_name = "Test_Experiment"
+run(config_file, run_name)
