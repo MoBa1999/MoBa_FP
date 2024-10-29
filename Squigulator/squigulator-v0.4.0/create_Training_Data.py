@@ -2,6 +2,7 @@ import subprocess
 import h5py
 import pyslow5
 import os
+import numpy as np
 
 
 def process_fasta(input_file, output_prefix):
@@ -96,6 +97,42 @@ def blow5_to_pod5(input_folder, output_folder):
             print(f"Converted {input_path} to {output_path}")
 # Beispielaufruf
 
+def blow5_to_numpy(blow5_dir, output_dir,end_index=2):
+  """
+  Converts multiple blow5 files in a directory to separate NumPy arrays and saves them as .npy files.
+
+  Args:
+      blow5_dir (str): Path to the directory containing blow5 files.
+      output_dir (str): Path to the directory where .npy files will be saved.
+  """
+
+  # List all files in the blow5 directory
+  blow5_files = [f"training_{i}.blow5" for i in range(end_index)]
+
+  # Process all .blow5 files
+  for blow_file in blow5_files:
+    blow_file_path = os.path.join(blow5_dir, blow_file)
+    
+    # Open the blow5 file
+    s5 = pyslow5.Open(blow_file_path, 'r')
+    reads = s5.seq_reads()
+
+      # Process each read
+    for read in reads:
+        read_id = read['read_id']
+        signal = read['signal']
+
+        # Convert signal to NumPy array
+        signal_array = np.array(signal, dtype=np.int16)
+
+        # Create output filename with read ID
+        output_npy = os.path.join(output_dir, f'read_{read_id}.npy')
+
+        # Save signal as NumPy array
+        np.save(output_npy, signal_array)
+
+        print(f"Saved read {read_id} to {output_npy}")
+
 input_file = "oligos_combined.txt"
 output_prefix = "Training_Data/training_file"
 
@@ -107,4 +144,5 @@ output_dir = 'Pod5_Training/'
 #process_fasta(input_file, output_prefix)
 #run_squigulator()
 #blow5_to_fast5_multiple(blow5_dir, output_dir)
-blow5_to_pod5(blow5_dir, output_dir)
+#blow5_to_pod5(blow5_dir, output_dir)
+blow5_to_numpy(blow5_dir, "Numpy_Data_1/")
