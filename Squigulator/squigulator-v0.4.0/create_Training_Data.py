@@ -163,7 +163,7 @@ def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
                 output_tar = os.path.join(output_dir, f'signal_{i}_tarseq.npy')
                 # Save the combined array as a NumPy file
                 np.save(output_npy, signal_array)
-                np.save(output_tar, signal_array)
+                np.save(output_tar, sequence_data)
                 print(signal_array)
                 print(f"Saved read {read_id} to {output_npy}")
             except FileNotFoundError:
