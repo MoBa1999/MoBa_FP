@@ -4,6 +4,18 @@ import pyslow5
 import os
 import numpy as np
 
+def base_to_vector(base):
+        """Konvertiert eine Base (A, T, C, G) in einen 4-dimensionalen Vektor."""
+        vector = [0, 0, 0, 0]
+        if base == 'A':
+            vector[0] = 1
+        elif base == 'T':
+            vector[1] = 1
+        elif base == 'C':
+            vector[2] = 1
+        elif base == 'G':
+            vector[3] = 1
+        return vector
 
 def process_fasta(input_file, output_prefix):
     with open(input_file, 'r') as f:
@@ -97,41 +109,67 @@ def blow5_to_pod5(input_folder, output_folder):
             print(f"Converted {input_path} to {output_path}")
 # Beispielaufruf
 
-def blow5_to_numpy(blow5_dir, output_dir,end_index=2):
-  """
-  Converts multiple blow5 files in a directory to separate NumPy arrays and saves them as .npy files.
+def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
+    """
+    Converts multiple blow5 files in a directory to separate NumPy arrays and saves them as .npy files,
+    additionally analyzing the corresponding FASTA files and saving the second line as a separate NumPy array.
 
-  Args:
-      blow5_dir (str): Path to the directory containing blow5 files.
-      output_dir (str): Path to the directory where .npy files will be saved.
-  """
+    Args:
+        blow5_dir (str): Path to the directory containing blow5 files.
+        output_dir (str): Path to the directory where .npy files will be saved.
+        end_index (int): End index for file numbering (exclusive).
+    """
 
-  # List all files in the blow5 directory
-  blow5_files = [f"training_{i}.blow5" for i in range(end_index)]
+    # List all files in the blow5 directory
+    blow5_files = [f"training_{i}.blow5" for i in range(end_index)]
 
-  # Process all .blow5 files
-  for blow_file in blow5_files:
-    blow_file_path = os.path.join(blow5_dir, blow_file)
-    
-    # Open the blow5 file
-    s5 = pyslow5.Open(blow_file_path, 'r')
-    reads = s5.seq_reads()
+    # Process all .blow5 files
+    for i, blow_file in enumerate(blow5_files, start=0):
+        blow_file_path = os.path.join(blow5_dir, blow_file)
+        fasta_file_path = os.path.join(blow5_dir, f"training_file_{i}.fasta")  # Adjust FASTA file name based on blow5 index
+    #TODO: CHECK IF ASSIGNMENT IS CORRECT
 
-      # Process each read
-    for read in reads:
-        read_id = read['read_id']
-        signal = read['signal']
+        # Open the blow5 file
+        s5 = pyslow5.Open(blow_file_path, 'r')
+        reads = s5.seq_reads()
 
-        # Convert signal to NumPy array
-        signal_array = np.array(signal, dtype=np.int16)
+        # Process each read
+        for read in reads:
+            read_id = read['read_id']
+            signal = read['signal']
 
-        # Create output filename with read ID
-        output_npy = os.path.join(output_dir, f'read_{read_id}.npy')
+            # Convert signal to NumPy array
+            signal_array = np.array(signal, dtype=np.int16)
 
-        # Save signal as NumPy array
-        np.save(output_npy, signal_array)
+            # Read and process FASTA file (assuming second line contains sequence)
+            try:
+                with open(fasta_file_path, 'r') as fasta_file:
+                    lines = fasta_file.readlines()
+                    sequence = lines[1].strip()  # Second line (assuming sequence)
 
-        print(f"Saved read {read_id} to {output_npy}")
+              
+                sequence_data = []  # Create an empty list to store the vectors
+                for x in sequence:
+                    sequence_data.append(base_to_vector(x))
+                # Convert the list of vectors to a NumPy array
+                sequence_data = np.array(sequence_data)
+
+                print(sequence_data)
+                # Combine signal and sequence arrays
+                
+
+                # Create output filename for the combined array
+                output_npy = os.path.join(output_dir, f'signal_{i}.npy')
+                output_tar = os.path.join(output_dir, f'signal_{i}_tarseq.npy')
+                # Save the combined array as a NumPy file
+                np.save(output_npy, signal_array)
+                np.save(output_tar, signal_array)
+                print(signal_array)
+                print(f"Saved read {read_id} to {output_npy}")
+            except FileNotFoundError:
+                print(f"FASTA file not found: {fasta_file_path}")
+
+        s5.close()
 
 input_file = "oligos_combined.txt"
 output_prefix = "Training_Data/training_file"
