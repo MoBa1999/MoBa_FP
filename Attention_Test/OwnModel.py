@@ -1,69 +1,84 @@
 import tensorflow as tf
+import numpy as np
 
 from Files.ConvBlock import ConvolutionBlock
-#from Files.Transformer import Transformer
-
 
 class Test_Model(tf.keras.Model):
-    def __init__(self, d_model, max_pool_layer_idx,num_cnn_blocks):
+    def __init__(self, d_model, max_pool_layer_idx, num_cnn_blocks, num_classes, label_length):
         super(Test_Model, self).__init__()
 
         # cnn layer for dimensionality expansion
-        self.first_cnn = tf.keras.layers.Conv1D(d_model, 1, padding="same", activation="relu", name=f"dimensionality-cnn")
-        
+        self.first_cnn = tf.keras.layers.Conv1D(d_model, 1, padding="same", activation="relu", name="dimensionality-cnn")     
         self.max_pool_layer_idx = max_pool_layer_idx
         self.max_pool = tf.keras.layers.MaxPooling1D(pool_size=2, name="max_pool_1D")
+        self.cnn_blocks = [ConvolutionBlock([1, 10, 10, 1], d_model, i) for i in range(num_cnn_blocks)]
 
-        self.cnn_blocks = [ConvolutionBlock([1,3,1], d_model, i) for i in range(num_cnn_blocks)]
-
-        self.feed_forward = tf.keras.layers.Dense(1312, activation='relu', name="feed_forward_layer")
-        self.reshape_layer = tf.keras.layers.Reshape((328, 4), name="reshape_layer")
+        # Update output dimension to match number of classes (including blank)
+        self.feed_forward = tf.keras.layers.Dense(num_classes * 328, activation=None, name="feed_forward_layer")  # No activation
+        self.reshape_layer = tf.keras.layers.Reshape((328, num_classes), name="reshape_layer")  # Shape should be (timesteps, num_classes)
         self.flatten = tf.keras.layers.Flatten(name="flatten_layer")
+        self.softmax_layer = tf.keras.layers.Softmax(axis=-1, name="Normalization")
 
-    def call(self, inp):
-        print("Input shape:", inp.shape)  # Print the shape of the input tensor
+        #self.label_length = label_length
+    def vector_to_base(self, vector):
+        """Converts a 4-dimensional vector to a base (A, T, C, G) based on the highest value."""
+        max_index = np.argmax(vector)
+        if max_index == 0:
+            return 'A'
+        elif max_index == 1:
+            return 'T'
+        elif max_index == 2:
+            return 'C'
+        elif max_index == 3:
+            return 'G'
+        else:
+            raise ValueError("Invalid vector input. Should be a 4-dimensional vector.")
 
-        # Apply the first convolution layer
+    def get_base_out(self,output_tensor):
+        base_sequences = []
+        for batch_idx in range(output_tensor.shape[0]):
+            base_sequence = ""
+            for time_step in range(output_tensor.shape[1]):
+                vector = output_tensor[batch_idx, time_step]
+                base = self.vector_to_base(vector)
+                base_sequence += base
+            base_sequences.append(base_sequence)
+        return base_sequences
+    
+    def call(self, inp, print_=False):
         x = self.first_cnn(inp)  
-        print("Shape after first_cnn:", x.shape)  # Print the shape after the first Conv1D layer
-
-        # Apply the CNN blocks (if any)
-        x = self.call_cnn_blocks(x)  
-        print("Shape after call_cnn_blocks:", x.shape)  # Print the shape after CNN blocks
-
+        x = self.call_cnn_blocks(x)
         x = self.flatten(x)
-        print("Shape after flatten:", x.shape)  # Print the shape after CNN blocks
-        # Apply the feedforward layer
         x = self.feed_forward(x)  
-        print("Shape after feed_forward:", x.shape)  # Print the shape after the feedforward layer
-
-        # Reshape to the desired output shape (1, 328, 4)
-        x = self.reshape_layer(x)  # Uncomment this line if you want to use a reshape layer
-        print("Shape after reshape_layer:", x.shape)  # Print shape after reshaping
-
+        x = self.reshape_layer(x)
+        if print_:  
+            print("Shape after reshape_layer:", x.shape)  # Print shape after reshaping
+            print(x)
+            print("Done")
+        x = self.softmax_layer(x)
         return x
     
     def call_cnn_blocks(self, x):
-        for i,cnn_block in enumerate(self.cnn_blocks):
+        for i, cnn_block in enumerate(self.cnn_blocks):
             x = cnn_block(x)
-            
             if i in self.max_pool_layer_idx:
                 x = self.max_pool(x)
         return x
-    def train(self, train_data, train_labels, epochs=10, batch_size=32):
-        # Compile the model with an optimizer and loss function
-        self.compile(optimizer='adam', loss='mse', metrics=['mae'])
+    
+    def call_bases(self,x):
+        x = self.call(x)
+        x = self.get_base_out(x)
+        return x
 
-        # Fit the model to the training data
+
+
+    def train(self, train_data, train_labels, epochs=10, batch_size=32):
+        # Compile the model with an optimizer
+        
+        self.compile(optimizer='adam', 
+                 loss='categorical_crossentropy', metrics=['accuracy'])
+
+        # Fit the model to the training data without validation
         history = self.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size)
 
         return history
-    
-
-
-    
-
-
-
-
-    
