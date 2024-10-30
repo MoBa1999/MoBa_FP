@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 # Beispielwert für d_model festlegen
 d_model = 256
-model = Test_Model(d_model,[1,2],4)
+model = Test_Model(d_model,[1,2],4,4, 328)
 
 signals = []
 seqs = []
@@ -36,7 +36,7 @@ seqs = tf.convert_to_tensor(seqs.reshape(seqs.shape[0], seqs.shape[1], 4), dtype
 
 
 #Trainings Test
-history = model.train(signals, seqs, epochs=10, batch_size=32)
+history = model.train(signals, seqs, epochs=20, batch_size=32)
 print("Training completed!")
 print(history.history['loss'])
 print("Example")

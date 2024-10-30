@@ -206,7 +206,6 @@ def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
 
 
 
-
 input_oligos = "oligos_combined.txt"
 output_prefix = "Tr_Data_Fasta/batch_0"
 
@@ -216,7 +215,7 @@ output_dir = 'Pod5_Training/'
 
 #Run only for creating fasta files
 #process_fasta(input_oligos, output_prefix)
-run_squigulator()
+#run_squigulator()
 #blow5_to_fast5_multiple(blow5_dir, output_dir)
 #blow5_to_pod5(blow5_dir, output_dir)
 #blow5_to_pod5(blow5_dir, "Pod5_Training/")
