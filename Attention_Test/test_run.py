@@ -4,9 +4,6 @@ import numpy as np
 from Files.attention_utils import create_combined_mask
 import matplotlib.pyplot as plt
 
-# Beispielwert für d_model festlegen
-d_model = 256
-model = Test_Model(d_model,[1,2],4,4, 328)
 
 signals = []
 seqs = []
@@ -27,6 +24,24 @@ for i in range(100):
 seqs = np.array(seqs)
 signals = np.array(signals)
 
+# Check for available GPUs
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        # Set the memory growth to True to prevent all memory being allocated at once
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+        print(len(logical_gpus), "Logical GPUs")
+    except RuntimeError as e:
+        # Memory growth must be set before GPUs have been initialized
+        print(e)
+else:
+    print("No GPUs...")
+
+# Beispielwert für d_model festlegen
+d_model = 256
+model = Test_Model(d_model,[1,2],4,4, 328)
 
 #Testing:
 input_tensor_example = tf.convert_to_tensor(signal.reshape((1, len(signals[0]), 1)), dtype=tf.float32)
