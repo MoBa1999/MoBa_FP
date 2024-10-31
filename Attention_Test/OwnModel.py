@@ -15,8 +15,8 @@ class Test_Model(tf.keras.Model):
         self.cnn_blocks = [ConvolutionBlock([1, 10, 10, 1], d_model, i) for i in range(num_cnn_blocks)]
 
         # Update output dimension to match number of classes (including blank)
-        self.feed_forward = tf.keras.layers.Dense(num_classes * 328, activation=None, name="feed_forward_layer")  # No activation
-        self.reshape_layer = tf.keras.layers.Reshape((328, num_classes), name="reshape_layer")  # Shape should be (timesteps, num_classes)
+        self.feed_forward = tf.keras.layers.Dense(num_classes * 656, activation=None, name="feed_forward_layer")  # No activation
+        self.reshape_layer = tf.keras.layers.Reshape((656, num_classes), name="reshape_layer")  # Shape should be (timesteps, num_classes)
         self.flatten = tf.keras.layers.Flatten(name="flatten_layer")
         self.softmax_layer = tf.keras.layers.Softmax(axis=-1, name="Normalization")
 
@@ -56,7 +56,6 @@ class Test_Model(tf.keras.Model):
             print("Shape after reshape_layer:", x.shape)  # Print shape after reshaping
             print(x)
             print("Done")
-        x = self.softmax_layer(x)
         return x
     
     def call_cnn_blocks(self, x):
@@ -73,16 +72,18 @@ class Test_Model(tf.keras.Model):
     
     def train_step(self, data):
         ctc_loss = tf.keras.losses.CTC(name="hi")
-
         inputs, labels = data
-
-            
-        tf.print("Inputs shape:", tf.shape(inputs))
-        tf.print("Inputs shape:", tf.shape(labels))
+   
+        #tf.print("Inputs shape:", tf.shape(inputs))
+        #tf.print("Labels shape:", tf.shape(labels))
 
         with tf.GradientTape() as tape:
             logits = self(inputs, training=True)  # Forward pass
+            
+            tf.print(logits)
+            tf.print(labels)
 
+            
             loss = ctc_loss(labels, logits)
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
