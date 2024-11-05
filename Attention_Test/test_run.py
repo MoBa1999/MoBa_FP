@@ -30,7 +30,7 @@ signals = np.array(signals)
 
 
 # Beispielwert für d_model festlegen
-d_model = 256
+d_model = 128
 model = Test_Model(d_model,[1,2],4,5, 328)
 
 #Testing:
@@ -45,25 +45,25 @@ input_tensor_example = tf.convert_to_tensor(signal.reshape((1, len(signals[0]), 
 # Konvertiere in Tensoren und forme für TensorFlow um
 signals = tf.convert_to_tensor(signals.reshape(signals.shape[0], signals.shape[1], 1), dtype=tf.float32)  # Form: (100, 2795, 1)
 seqs = tf.convert_to_tensor(seqs, dtype=tf.int32)  # Sequenzen als integer-Indizes für CTC Loss
-batch_size = 100
-train_dataset = tf.data.Dataset.from_tensor_slices((signals, seqs))
-train_dataset = train_dataset.shuffle(buffer_size=100).batch(batch_size)
-train_dataset = train_dataset.map(lambda x, y: (x, tf.argmax(y, axis=-1, output_type=tf.int32)+1))
+seqs = tf.argmax(seqs, axis=-1, output_type=tf.int32)
+print(tf.shape(signals))
+print(tf.shape(seqs))
+
 
 # Modell aufrufen (Inferenz durchführen)
-for batch in train_dataset.take(1):
-    inputs, labels = batch
-    logits = model(inputs)
+# for batch in train_dataset.take(1):
+#     inputs, labels = batch
+#     logits = model(inputs)
     #print(logits)
     #print(labels)
     
 
 #Trainings Test
-history = model.train(train_dataset, epochs=50, batch_size=2)
+history = model.train(signals, seqs, epochs=10, batch_size=16)
 #print("Training completed!")
 print(history.history['loss'])
 #print(history.history['accuracy'])
 print("Example")
-#print(model.call_bases(input_tensor_example))
+print(model.call_bases(input_tensor_example))
 
 
