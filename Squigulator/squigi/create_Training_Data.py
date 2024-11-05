@@ -189,13 +189,14 @@ def blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=100):
                 # Convert the list of vectors to a NumPy array
                 sequence_data = np.array(sequence_data)
 
-                print(sequence_data)
+                #print(sequence_data)
                 # Combine signal and sequence arrays
                 
 
                 # Create output filename for the combined array
                 output_npy = os.path.join(output_dir, f'signal_{i}.npy')
                 output_tar = os.path.join(output_dir, f'signal_{i}_tarseq.npy')
+                
                 # Save the combined array as a NumPy file
                 np.save(output_npy, signal_array)
                 np.save(output_tar, sequence_data)
@@ -223,9 +224,9 @@ def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5)
         def biased_choice(last_base):
             weights = [0.25, 0.25, 0.25, 0.25]
             if last_base is not None:
-                weights[string.ascii_uppercase[:4].index(last_base)] *= bias
+                weights['ATGC'.index(last_base)] *= bias
                 weights = [w / sum(weights) for w in weights]  # Normalize weights
-            return random.choices(string.ascii_uppercase[:4], weights=weights)[0]
+            return random.choices('ATGC', weights=weights)[0]
 
         sequence = ""
         for _ in range(length):
@@ -245,22 +246,23 @@ def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5)
                 f.write(f">File_{i}_Seq_{j}\n{sequence}\n")
 
 
-num_files = 1000
+num_files = 10000
 fasta_dir = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
-sequence_per_file = 100
+output_folder = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
+sequence_per_file = 1
 #generate_fasta_files(num_files,output_folder, sequence_per_file)
 
 #input_oligos = "oligos_combined.txt"
 #output_prefix = "Tr_Data_Fasta/batch_0"
 
 blow5_dir = '/media/hdd1/MoritzBa/Rd_Data_Blow5'
-output_dir = '/media/hdd1/MoritzBa/Rd_Data_NUmpy'
+output_dir = '/media/hdd1/MoritzBa/Rd_Data_Numpy'
 
 
 #Run only for creating fasta files
 #process_fasta(input_oligos, output_prefix)
-#run_squigulator("/media/hdd1/MoritzBa",num_files=1000)
-blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=999)
+#run_squigulator("/media/hdd1/MoritzBa",num_files=10000)
+blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=9998)
 #blow5_to_pod5(blow5_dir, output_dir)
 #blow5_to_pod5(blow5_dir, "Pod5_Training/")
 
