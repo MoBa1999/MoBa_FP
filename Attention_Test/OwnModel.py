@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
+
 from Files.ConvBlock import ConvolutionBlock
 
 class Test_Model(tf.keras.Model):
@@ -57,6 +58,7 @@ class Test_Model(tf.keras.Model):
             print("Done")
         x = self.softmax_layer(x)
         return x
+
     
     def call_cnn_blocks(self, x):
         for i, cnn_block in enumerate(self.cnn_blocks):
@@ -69,16 +71,39 @@ class Test_Model(tf.keras.Model):
         x = self.call(x)
         x = self.get_base_out(x)
         return x
+    
+    def train_step(self, data):
+        ctc_loss = tf.keras.losses.CTC(name="hi")
+        inputs, labels = data
+   
+        #tf.print("Inputs shape:", tf.shape(inputs))
+        #tf.print("Labels shape:", tf.shape(labels))
+
+        with tf.GradientTape() as tape:
+            logits = self(inputs, training=True)  # Forward pass
+            
+            #tf.print(logits)
+            #tf.print(labels)
+
+            
+            loss = ctc_loss(labels, logits)
+        gradients = tape.gradient(loss, self.trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
+        return {"loss": loss}
 
 
 
-    def train(self, train_data, train_labels, epochs=10, batch_size=32):
+    def train(self, training_data, training_labels, epochs=10, batch_size=32):
         # Compile the model with an optimizer
         
-        self.compile(optimizer='adam', 
-                 loss='categorical_crossentropy', metrics=['accuracy'])
+        #self.compile(optimizer='adam', 
+        #         loss='categorical_crossentropy', metrics=['accuracy'])
+        self.compile(optimizer=tf.keras.optimizers.Adam())
 
         # Fit the model to the training data without validation
-        history = self.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size)
+        #history = self.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size)
+        
+        #print(train_dataset[0].shape)
+        history = self.fit(training_data, training_labels, epochs=epochs, batch_size=batch_size)
 
         return history

@@ -3,6 +3,8 @@ import h5py
 import pyslow5
 import os
 import numpy as np
+import random 
+import string
 
 def base_to_vector(base):
         """Konvertiert eine Base (A, T, C, G) in einen 4-dimensionalen Vektor."""
@@ -39,7 +41,7 @@ def process_fasta(input_file, output_prefix, max_files=100):
             out_file.write(f">{header}\n{sequence}\n")
 
 
-def run_squigulator(num_files=100):
+def run_squigulator(folder, num_files=100):
     """
     Runs the squigulator command for multiple training files.
 
@@ -47,8 +49,8 @@ def run_squigulator(num_files=100):
         num_files (int): The number of files to process (default: 100)
     """
     for i in range(num_files - 1):
-        input_file = f"Tr_Data_Fasta/batch_0_{i}.fasta"
-        output_file = f"Tr_Data_Blow5/training_{i}.blow5"
+        input_file = f"{folder}/Rd_Data_Fasta/fasta_file_{i}.fasta"
+        output_file = f"{folder}/Rd_Data_Blow5/training_{i}.blow5"
         
         # Command to be executed
         command = ["./squigulator", "-x", "dna-r9-min", input_file, "-o", output_file, "-n", "1"]
@@ -143,7 +145,7 @@ def blow5_to_pod5(blow5_dir, output_dir, end_index=100):
     print("Conversion completed!")
 # Beispielaufruf
 
-def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
+def blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=100):
     """
     Converts multiple blow5 files in a directory to separate NumPy arrays and saves them as .npy files,
     additionally analyzing the corresponding FASTA files and saving the second line as a separate NumPy array.
@@ -159,7 +161,7 @@ def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
     # Process all .blow5 files
     for i, blow_file in enumerate(blow5_files, start=0):
         blow_file_path = os.path.join(blow5_dir, blow_file)
-        fasta_file_path = os.path.join(blow5_dir, f"training_file_{i}.fasta")  # Adjust FASTA file name based on blow5 index
+        fasta_file_path = os.path.join(fasta_dir, f"fasta_file_{i}.fasta")  # Adjust FASTA file name based on blow5 index
     #TODO: CHECK IF ASSIGNMENT IS CORRECT
 
         # Open the blow5 file
@@ -206,16 +208,59 @@ def blow5_to_numpy(blow5_dir, output_dir, end_index=100):
 
 
 
-input_oligos = "oligos_combined.txt"
-output_prefix = "Tr_Data_Fasta/batch_0"
+def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5):
+    """
+    Generates multiple FASTA files with random sequences, with an optional bias against repeated bases.
 
-blow5_dir = 'Training_Data'
-output_dir = 'Pod5_Training/'
+    Args:
+        num_files: The number of FASTA files to create.
+        output_folder: The directory to save the FASTA files.
+        sequences_per_file: The number of sequences per file.
+        bias: The bias factor for repeated bases. A value of 0.5 means half the likelihood of repeated bases.
+    """
+
+    def generate_random_sequence(length, bias):
+        def biased_choice(last_base):
+            weights = [0.25, 0.25, 0.25, 0.25]
+            if last_base is not None:
+                weights[string.ascii_uppercase[:4].index(last_base)] *= bias
+                weights = [w / sum(weights) for w in weights]  # Normalize weights
+            return random.choices(string.ascii_uppercase[:4], weights=weights)[0]
+
+        sequence = ""
+        for _ in range(length):
+            sequence += biased_choice(sequence[-1] if sequence else None)
+        return sequence
+
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+
+    for i in range(num_files):
+        filename = f"fasta_file_{i}.fasta"
+        filepath = os.path.join(output_folder, filename)
+
+        with open(filepath, 'w') as f:
+            for j in range(sequences_per_file):
+                sequence = generate_random_sequence(200, bias)
+                f.write(f">File_{i}_Seq_{j}\n{sequence}\n")
+
+
+num_files = 1000
+fasta_dir = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
+sequence_per_file = 100
+#generate_fasta_files(num_files,output_folder, sequence_per_file)
+
+#input_oligos = "oligos_combined.txt"
+#output_prefix = "Tr_Data_Fasta/batch_0"
+
+blow5_dir = '/media/hdd1/MoritzBa/Rd_Data_Blow5'
+output_dir = '/media/hdd1/MoritzBa/Rd_Data_NUmpy'
 
 
 #Run only for creating fasta files
 #process_fasta(input_oligos, output_prefix)
-#run_squigulator()
-#blow5_to_fast5_multiple(blow5_dir, output_dir)
+#run_squigulator("/media/hdd1/MoritzBa",num_files=1000)
+blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=999)
 #blow5_to_pod5(blow5_dir, output_dir)
 #blow5_to_pod5(blow5_dir, "Pod5_Training/")
+
