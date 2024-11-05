@@ -15,8 +15,8 @@ class Test_Model(tf.keras.Model):
         self.cnn_blocks = [ConvolutionBlock([1, 10, 10, 1], d_model, i) for i in range(num_cnn_blocks)]
 
         # Update output dimension to match number of classes (including blank)
-        self.feed_forward = tf.keras.layers.Dense(num_classes * 656, activation=None, name="feed_forward_layer")  # No activation
-        self.reshape_layer = tf.keras.layers.Reshape((656, num_classes), name="reshape_layer")  # Shape should be (timesteps, num_classes)
+        self.feed_forward = tf.keras.layers.Dense(num_classes * 328, activation=None, name="feed_forward_layer")  # No activation
+        self.reshape_layer = tf.keras.layers.Reshape((328, num_classes), name="reshape_layer")  # Shape should be (timesteps, num_classes)
         self.flatten = tf.keras.layers.Flatten(name="flatten_layer")
         self.softmax_layer = tf.keras.layers.Softmax(axis=-1, name="Normalization")
 
@@ -56,7 +56,9 @@ class Test_Model(tf.keras.Model):
             print("Shape after reshape_layer:", x.shape)  # Print shape after reshaping
             print(x)
             print("Done")
+        x = self.softmax_layer(x)
         return x
+
     
     def call_cnn_blocks(self, x):
         for i, cnn_block in enumerate(self.cnn_blocks):
@@ -80,8 +82,8 @@ class Test_Model(tf.keras.Model):
         with tf.GradientTape() as tape:
             logits = self(inputs, training=True)  # Forward pass
             
-            tf.print(logits)
-            tf.print(labels)
+            #tf.print(logits)
+            #tf.print(labels)
 
             
             loss = ctc_loss(labels, logits)
@@ -91,7 +93,7 @@ class Test_Model(tf.keras.Model):
 
 
 
-    def train(self, train_dataset, epochs=10, batch_size=32):
+    def train(self, training_data, training_labels, epochs=10, batch_size=32):
         # Compile the model with an optimizer
         
         #self.compile(optimizer='adam', 
@@ -102,6 +104,6 @@ class Test_Model(tf.keras.Model):
         #history = self.fit(train_data, train_labels, epochs=epochs, batch_size=batch_size)
         
         #print(train_dataset[0].shape)
-        history = self.fit(train_dataset, epochs=epochs, batch_size=batch_size)
+        history = self.fit(training_data, training_labels, epochs=epochs, batch_size=batch_size)
 
         return history
