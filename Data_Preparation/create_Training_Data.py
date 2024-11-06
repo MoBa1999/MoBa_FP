@@ -5,6 +5,7 @@ import os
 import numpy as np
 import random 
 import string
+import re
 
 def base_to_vector(base):
         """Konvertiert eine Base (A, T, C, G) in einen 4-dimensionalen Vektor."""
@@ -41,22 +42,26 @@ def process_fasta(input_file, output_prefix, max_files=100):
             out_file.write(f">{header}\n{sequence}\n")
 
 
-def run_squigulator(folder, num_files=100):
+def run_squigulator(fasta_folder, blow5_folder, reads_per_sequence):
     """
     Runs the squigulator command for multiple training files.
 
     Parameters:
         num_files (int): The number of files to process (default: 100)
     """
-    for i in range(num_files - 1):
-        input_file = f"{folder}/Rd_Data_Fasta/fasta_file_{i}.fasta"
-        output_file = f"{folder}/Rd_Data_Blow5/training_{i}.blow5"
+    fasta_files = [os.path.join(fasta_folder, file) for file in os.listdir(fasta_folder) if file.endswith(".fasta")]
+    num_files = len(fasta_files)
+    print(f"{num_files} FASTA Files found in {fasta_folder}")
+    for i in range(num_files):
+        input_file = f"{fasta_folder}/fasta_file_{i}.fasta"
+        for j in range (reads_per_sequence):
+            output_file = f"{blow5_folder}/seq_{i}_read_{j}.blow5"
+            print(output_file)
+            # Command to be executed
+            command = ["./squigulator", "-x", "dna-r9-min", input_file, "-o", output_file, "-n", "1"]
         
-        # Command to be executed
-        command = ["./squigulator", "-x", "dna-r9-min", input_file, "-o", output_file, "-n", "1"]
-        
-        # Run the command
-        subprocess.run(command, check=True)
+            # Run the command
+            subprocess.run(command, check=True)
 
 def blow5_to_fast5_multiple(blow5_dir, output_dir):
        
@@ -143,9 +148,9 @@ def blow5_to_pod5(blow5_dir, output_dir, end_index=100):
         pod5.close()
 
     print("Conversion completed!")
-# Beispielaufruf
 
-def blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=100):
+
+def blow5_to_numpy(blow5_dir, fasta_dir, output_dir, reads_per_sequence):
     """
     Converts multiple blow5 files in a directory to separate NumPy arrays and saves them as .npy files,
     additionally analyzing the corresponding FASTA files and saving the second line as a separate NumPy array.
@@ -156,55 +161,54 @@ def blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=100):
         end_index (int): End index for file numbering (exclusive).
     """
     # List all files in the blow5 directory
-    blow5_files = [f"training_{i}.blow5" for i in range(end_index)]
+    blow5_files = [os.path.join(blow5_dir, file) for file in os.listdir(blow5_dir) if file.endswith(".blow5")]
+    num_files = len(blow5_files)
+    num_sequences = int(num_files / reads_per_sequence)
+    print(f"{num_files} Blow5 Files found in {blow5_dir}")
+    print(f"Therefore {num_sequences} Sequences with each {reads_per_sequence} Reads per Sequences expected.")
 
-    # Process all .blow5 files
-    for i, blow_file in enumerate(blow5_files, start=0):
-        blow_file_path = os.path.join(blow5_dir, blow_file)
-        fasta_file_path = os.path.join(fasta_dir, f"fasta_file_{i}.fasta")  # Adjust FASTA file name based on blow5 index
-    #TODO: CHECK IF ASSIGNMENT IS CORRECT
+    for x in range(num_sequences):  # Loop through all sequences
+        fasta_file_path = os.path.join(fasta_dir, f"fasta_file_{x}.fasta")  # Adjusted FASTA file name for each sequence
+        
+        try:
+            # Read and process the FASTA file (assuming second line contains the sequence)
+            with open(fasta_file_path, 'r') as fasta_file:
+                lines = fasta_file.readlines()
+                sequence = lines[1].strip()  # Second line (assuming sequence)
+            
+            sequence_data = [base_to_vector(base) for base in sequence]
+            sequence_data = np.array(sequence_data)  # Convert to NumPy array
 
-        # Open the blow5 file
-        s5 = pyslow5.Open(blow_file_path, 'r')
-        reads = s5.seq_reads()
-
-        # Process each read
-        for read in reads:
-            read_id = read['read_id']
-            signal = read['signal']
-
-            # Convert signal to NumPy array
-            signal_array = np.array(signal, dtype=np.int16)
-
-            # Read and process FASTA file (assuming second line contains sequence)
-            try:
-                with open(fasta_file_path, 'r') as fasta_file:
-                    lines = fasta_file.readlines()
-                    sequence = lines[1].strip()  # Second line (assuming sequence)
-
-              
-                sequence_data = []  # Create an empty list to store the vectors
-                for x in sequence:
-                    sequence_data.append(base_to_vector(x))
-                # Convert the list of vectors to a NumPy array
-                sequence_data = np.array(sequence_data)
-
-                print(sequence_data)
-                # Combine signal and sequence arrays
+            for y in range(reads_per_sequence):  # Loop through all reads in the current sequence
+                blow5_file = os.path.join(blow5_dir, f"seq_{x}_read_{y}.blow5")  # Adjusted BLOW5 file path
                 
+                try:
+                    # Open the blow5 file and read data
+                    s5 = pyslow5.Open(blow5_file, 'r')
+                    reads = s5.seq_reads()
 
-                # Create output filename for the combined array
-                output_npy = os.path.join(output_dir, f'signal_{i}.npy')
-                output_tar = os.path.join(output_dir, f'signal_{i}_tarseq.npy')
-                # Save the combined array as a NumPy file
-                np.save(output_npy, signal_array)
-                np.save(output_tar, sequence_data)
-                print(signal_array)
-                print(f"Saved read {read_id} to {output_npy}")
-            except FileNotFoundError:
-                print(f"FASTA file not found: {fasta_file_path}")
+                    for read in reads:
+                        read_id = read['read_id']
+                        signal = read['signal']
+                        
+                        # Convert signal to NumPy array
+                        signal_array = np.array(signal, dtype=np.int16)
+                        
+                        # Define output filenames for the combined arrays
+                        output_npy = os.path.join(output_dir, f'signal_seq_{x}_read_{y}.npy')
+                        output_tar = os.path.join(output_dir, f'signal_seq_{x}_read_{y}_tarseq.npy')
+                        
+                        # Save signal and sequence data as separate NumPy files
+                        np.save(output_npy, signal_array)
+                        np.save(output_tar, sequence_data)
+                        print(f"Saved read {read_id} to {output_npy}")
+                    
+                    s5.close()
+                except FileNotFoundError:
+                    print(f"BLOW5 file not found: {blow5_file}")
 
-        s5.close()
+        except FileNotFoundError:
+            print(f"FASTA file not found: {fasta_file_path}")
 
 
 
@@ -223,9 +227,9 @@ def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5)
         def biased_choice(last_base):
             weights = [0.25, 0.25, 0.25, 0.25]
             if last_base is not None:
-                weights[string.ascii_uppercase[:4].index(last_base)] *= bias
+                weights['ATGC'.index(last_base)] *= bias
                 weights = [w / sum(weights) for w in weights]  # Normalize weights
-            return random.choices(string.ascii_uppercase[:4], weights=weights)[0]
+            return random.choices('ATGC', weights=weights)[0]
 
         sequence = ""
         for _ in range(length):
@@ -245,22 +249,23 @@ def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5)
                 f.write(f">File_{i}_Seq_{j}\n{sequence}\n")
 
 
-num_files = 1000
+num_files = 10000
 fasta_dir = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
-sequence_per_file = 100
+output_folder = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
+sequence_per_file = 1
 #generate_fasta_files(num_files,output_folder, sequence_per_file)
 
 #input_oligos = "oligos_combined.txt"
 #output_prefix = "Tr_Data_Fasta/batch_0"
 
 blow5_dir = '/media/hdd1/MoritzBa/Rd_Data_Blow5'
-output_dir = '/media/hdd1/MoritzBa/Rd_Data_NUmpy'
+numpy_dir = '/media/hdd1/MoritzBa/Rd_Data_Numpy'
 
 
 #Run only for creating fasta files
 #process_fasta(input_oligos, output_prefix)
-#run_squigulator("/media/hdd1/MoritzBa",num_files=1000)
-blow5_to_numpy(blow5_dir, output_dir, fasta_dir, end_index=999)
+#run_squigulator("/media/hdd1/MoritzBa/Rd_Data_Fasta","/media/hdd1/MoritzBa/Rd_Data_Blow5",10)
+blow5_to_numpy(blow5_dir, fasta_dir, numpy_dir,10)
 #blow5_to_pod5(blow5_dir, output_dir)
 #blow5_to_pod5(blow5_dir, "Pod5_Training/")
 
