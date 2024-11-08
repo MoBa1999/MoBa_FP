@@ -1,5 +1,4 @@
 from TransModel import MultiSeqModel
-import tensorflow as tf
 import numpy as np
 from Files.attention_utils import create_combined_mask
 import matplotlib.pyplot as plt
@@ -9,11 +8,12 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 
 
+
 signals = []
 seqs = []
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 
-num_sequences = 100 #7000 zum trainieren
+num_sequences = 7000 #7000 zum trainieren
 num_reads = 10
 
 # Find the maximum length across all signals for padding
@@ -40,6 +40,7 @@ for i in range(num_sequences):
     seq = np.load(f"{data_path}/signal_seq_{i}_read_{0}_tarseq.npy")
     seqs.append(seq)
 
+
 # Convert lists to arrays
 signals = torch.from_numpy(np.array(signals))
 seqs = torch.from_numpy(np.array(seqs))
@@ -55,12 +56,22 @@ model = MultiSeqModel(max_length, 200)
 
 
 model = MultiSeqModel(input_length=max_length, tar_length=200)
+print(model.get_num_params())
 dataset = TensorDataset(signals, seqs)
-train_loader = DataLoader(dataset, batch_size=2, shuffle=True)
-model.train_model(train_loader, num_epochs=20, learning_rate=0.001)
-# Test forward pass with dummy input
-# dummy_input = torch.randn(32, 10, input_length, 1)  # Batch of 32, 10 sequences, example length, 1 channel
-# print(dummy_input.shape)
+train_loader = DataLoader(dataset, batch_size=64, shuffle=True)
+model.train_model(train_loader, num_epochs=100, learning_rate=0.001)
 
-# output = model(dummy_input)
-# print(output.shape)
+
+model.eval()  # Set model to evaluation mode
+correct_predictions = 0
+total_predictions = 0
+
+with torch.no_grad():  # Disable gradient calculation for evaluation
+    for inputs, labels in train_loader:
+        outputs = model(inputs)
+        _, predicted = torch.max(outputs, dim=-1)  # Predicted classes
+        correct_predictions += (predicted == labels.argmax(dim=-1)).sum().item()
+        total_predictions += labels.numel()
+
+overall_accuracy = 100 * correct_predictions / total_predictions
+print(f"Overall Training Accuracy: {overall_accuracy:.2f}%")

@@ -67,6 +67,9 @@ class MultiSeqModel(nn.Module):
         output = x.view(batch_size, self.tar_length, 4)
         
         return output
+    def get_num_params(self, non_embedding=True):
+        n_params = sum(p.numel() for p in self.parameters())
+        return n_params
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001):
         criterion = nn.CrossEntropyLoss()  # Define loss function
@@ -76,20 +79,30 @@ class MultiSeqModel(nn.Module):
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
+            correct_predictions = 0
+            total_predictions = 0
+
             for inputs, labels in train_loader:
                 optimizer.zero_grad()  # Zero gradients
-                
+
                 outputs = self(inputs)  # Forward pass
                 # Reshape outputs and labels to match the dimensions expected by CrossEntropyLoss
-                loss = criterion(outputs.view(-1, 4), labels.view(-1,4).argmax(dim=-1))
+                loss = criterion(outputs.view(-1, 4), labels.view(-1, 4).argmax(dim=-1))
 
                 loss.backward()  # Backward pass
                 optimizer.step()  # Update weights
 
                 epoch_loss += loss.item()
-            
+
+                # Calculate accuracy
+                _, predicted = torch.max(outputs, dim=-1)  # Predicted classes
+                correct_predictions += (predicted == labels.argmax(dim=-1)).sum().item()
+                total_predictions += labels.size(0) * labels.size(1)  # Total number of labels in the batch
+
             avg_loss = epoch_loss / len(train_loader)
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}")
+            accuracy = 100 * correct_predictions / total_predictions
+
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
 
         print("Training complete!")
 

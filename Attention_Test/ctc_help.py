@@ -36,34 +36,30 @@ num_classes = 2
 
 # Create y_true (integer labels) with values in range [0, num_classes - 1]
 #y_true = np.random.randint(1, num_classes, size=(batch_size, max_length), dtype=int)
-y_true = np.array([[1, 2],[1 ,2]])
+y_true = np.array([[1, 2,1]])
 
 print("y_true:", y_true)
 
 # Create y_pred (logits) with high values in places that match y_true
 #y_pred = np.full((batch_size, max_length, num_classes), -100.0)
-# y_pred  = np.array([[
-#     [-100, 100, -100],
-#     [-100, 100, -100],
-#     [-100, -100, 100],
-#     [-100, -100, 100],
-# ], [
-#     [-100, 100, -100],
-#     [100, -100, -100],
-#     [-100, -100, 100],
-#     [-100, -100, 100],
-# ]])
-y_pred = np.random.uniform(low=-100, high=100, size=(2, 5, 3))
-print("y_pred:", y_pred)
+y_pred  = np.array([[
+    [100, -100, -100], #0
+    [-100, 100, -100], #1
+    [-100, -100, 100], #2
+    [-100, 100, -100], #1
+    [-100, 100, -100] #1
+]])
+# y_pred = np.random.uniform(low=-100, high=100, size=(2, 5, 3))
+# print("y_pred:", y_pred)
 
-y_true_c = collapse_sequences(np.argmax(y_pred, axis=2))
-print(y_true_c)
+# y_true_c = collapse_sequences(np.argmax(y_pred, axis=2))
+# print(y_true_c)
 
-print(f"calculated y_true: {y_true_c}")
+#print(f"calculated y_true: {y_true}")
 print(f"Real y_true: {y_true}")
 # Calculate CTC Loss
-loss = Test_Object(y_true_c, y_pred)
-print(f"DER FUCKING CTC LOSS: {loss}")
+loss = Test_Object(y_true, y_pred)
+print(f"DER CTC LOSS: {loss}")
 
 
 print("Check mit Mean Squared Error")
