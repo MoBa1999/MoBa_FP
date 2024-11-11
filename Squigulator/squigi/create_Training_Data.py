@@ -6,6 +6,7 @@ import numpy as np
 import random 
 import string
 import re
+import matplotlib.pyplot as plt
 
 def base_to_vector(base):
         """Konvertiert eine Base (A, T, C, G) in einen 4-dimensionalen Vektor."""
@@ -58,7 +59,7 @@ def run_squigulator(fasta_folder, blow5_folder, reads_per_sequence):
             output_file = f"{blow5_folder}/seq_{i}_read_{j}.blow5"
             print(output_file)
             # Command to be executed
-            command = ["./squigulator", "-x", "dna-r9-min", input_file, "-o", output_file, "-n", "1"]
+            command = ["./squigulator", "-x", "dna-r9-min", input_file, "-o", output_file, "-n", "1", "--seed",str(j+1)]
         
             # Run the command
             subprocess.run(command, check=True)
@@ -81,6 +82,7 @@ def blow5_to_fast5_multiple(blow5_dir, output_dir):
             for read in reads:
                 read_id = read['read_id']
                 signal = read['signal']
+                plt.plot(read)
                 print("Length of Read " + str(read_id) + " ist " + str(len(signal)))
                 
                 # Erstellen einer Gruppe für den Read in der .fast5 Datei
