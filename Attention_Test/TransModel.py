@@ -3,26 +3,26 @@ import torch.nn as nn
 import torch.optim as optim
 
 class MultiSeqModel(nn.Module):
-    def __init__(self, input_length, tar_length):
+    def __init__(self, input_length, tar_length, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40):
         super(MultiSeqModel, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
-        self.conv1d_1 = nn.Conv1d(in_channels=1, out_channels=10, kernel_size=1)
-        self.conv1d_2 = nn.Conv1d(in_channels=10, out_channels=20, kernel_size=5, padding = 2)
+        self.conv1d_1 = nn.Conv1d(in_channels=1, out_channels=conv_1_dim, kernel_size=1)
+        self.conv1d_2 = nn.Conv1d(in_channels=conv_1_dim, out_channels=10, kernel_size=5, padding = 2)
 
         # 2D Convolutional Layers for combined input
-        self.conv2d_1 = nn.Conv2d(in_channels=20, out_channels=20, kernel_size=(10, 3), padding=(0, 1))
-        self.conv2d_2 = nn.Conv2d(in_channels=20, out_channels=40, kernel_size=(1, 3), padding=(0, 1))
+        self.conv2d_1 = nn.Conv2d(in_channels=10, out_channels=conv_2_dim, kernel_size=(10, 3), padding=(0, 1))
+        self.conv2d_2 = nn.Conv2d(in_channels=conv_2_dim, out_channels=attention_dim, kernel_size=(1, 3), padding=(0, 1))
         
         # Max Pooling layer to reduce length by half
         self.max_pool = nn.MaxPool2d(kernel_size=(1, 2))
         
         # Attention layers
-        self.attention1 = nn.MultiheadAttention(embed_dim=40, num_heads=4)
-        self.attention2 = nn.MultiheadAttention(embed_dim=40, num_heads=4)
+        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
+        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
         
         # Feedforward layers
-        self.fc1 = nn.Linear(int(input_length/2) * 40, int(input_length/2) * 5 )
+        self.fc1 = nn.Linear(int(input_length/2) * attention_dim, int(input_length/2) * 5 )
         self.fc2 = nn.Linear(int(input_length/2) * 5, 4 * tar_length)
 
         # Output target length
@@ -71,11 +71,17 @@ class MultiSeqModel(nn.Module):
         n_params = sum(p.numel() for p in self.parameters())
         return n_params
     
-    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001):
+    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
         criterion = nn.CrossEntropyLoss()  # Define loss function
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)  # Define optimizer
+        loss_ = []
+        accuracy_= []
 
         self.train()  # Set model to training mode
+
+        # Move the model to the selected device
+        if device:
+            self.to(device)
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
@@ -83,6 +89,10 @@ class MultiSeqModel(nn.Module):
             total_predictions = 0
 
             for inputs, labels in train_loader:
+                # Move data to the selected device
+                if device:
+                    inputs, labels = inputs.to(device), labels.to(device)
+
                 optimizer.zero_grad()  # Zero gradients
 
                 outputs = self(inputs)  # Forward pass
@@ -101,9 +111,12 @@ class MultiSeqModel(nn.Module):
 
             avg_loss = epoch_loss / len(train_loader)
             accuracy = 100 * correct_predictions / total_predictions
+            loss_.append(avg_loss)
+            accuracy_.append(accuracy)
 
             print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
 
         print("Training complete!")
+        return loss_, accuracy_
 
 
