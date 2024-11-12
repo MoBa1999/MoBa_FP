@@ -23,7 +23,7 @@ class MultiSeqCTCModel(nn.Module):
         
         # Feedforward layers
         self.fc1 = nn.Linear(int(input_length/2) * attention_dim, int(input_length/2) * 5 )
-        self.fc2 = nn.Linear(int(input_length/2) * 5, 4 * tar_length)
+        self.fc2 = nn.Linear(int(input_length/2) * 5, 5 * tar_length)
 
         # Output target length
         self.tar_length = tar_length
@@ -64,7 +64,7 @@ class MultiSeqCTCModel(nn.Module):
         x = self.fc2(x)
         
         # Reshape to output shape [batch_size, tar_length, 4]
-        output = x.view(batch_size, self.tar_length, 4)
+        output = x.view(batch_size, self.tar_length, 5)
         
         return output
     def get_num_params(self, non_embedding=True):
@@ -72,7 +72,7 @@ class MultiSeqCTCModel(nn.Module):
         return n_params
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
-        criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=True)
+        criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         loss_ = []
         accuracy_ = []
@@ -91,20 +91,20 @@ class MultiSeqCTCModel(nn.Module):
                 if device:
                     inputs, labels = inputs.to(device), labels.to(device)
 
-                # Calculate lengths of inputs (all inputs have the same length in this case)
-                input_lengths = torch.full(size=(inputs.size(0),), fill_value=inputs.size(1), dtype=torch.long).to(device)
-
+                
                 # Flatten the labels into a single 1D tensor for CTC
+                
+                labels = torch.argmax(labels, dim=-1) +1
                 target_lengths = torch.tensor([label.size(0) for label in labels], dtype=torch.long).to(device)
-                labels = torch.cat([label for label in labels], dim=0).to(device)
-
+                target_lengths = torch.full((labels.size(0),), 200, dtype=torch.long).to(device)
                 # Forward pass
                 optimizer.zero_grad()
                 outputs = self(inputs).log_softmax(2)
 
                 # Reshape outputs for CTC Loss: (T, N, C)
                 outputs = outputs.permute(1, 0, 2)
-
+                input_lengths = torch.full((outputs.size(1),), 200, dtype=torch.long).to(device)
+                #Labels should be (N,S)
                 # Compute CTC loss
                 loss = criterion(outputs, labels, input_lengths, target_lengths)
                 loss.backward()
@@ -114,7 +114,7 @@ class MultiSeqCTCModel(nn.Module):
 
                 # Optional: Calculate accuracy
                 _, predicted = torch.max(outputs, dim=-1)
-                correct_predictions += (predicted == labels).sum().item()
+                correct_predictions += (predicted == torch.transpose(labels, 0, 1)).sum().item()
                 total_predictions += sum(target_lengths).item()  # Total labels for accuracy
 
             avg_loss = epoch_loss / len(train_loader)
