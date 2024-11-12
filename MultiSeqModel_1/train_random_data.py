@@ -1,66 +1,45 @@
 from TransModel import MultiSeqModel
-import tensorflow as tf
 import numpy as np
-from Files.attention_utils import create_combined_mask
 import matplotlib.pyplot as plt
 import os
 import torch 
 import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
+from data_prep_func import get_data_loader
+from data_prep_func import get_device
 
 
-signals = []
-seqs = []
+device = get_device(gpu_index=1)
+
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
+max_length, train_loader = get_data_loader(data_path,100)
+# Set up the range for attention dimensions
+attention_dims = range(20, 151, 5)  # Attention dimensions from 20 to 250, step 10
 
-num_sequences = 100 #7000 zum trainieren
-num_reads = 10
+# Initialize empty lists to store results
+all_losses = []
+all_accuracies = []
+all_attention_dims = []
 
-# Find the maximum length across all signals for padding
-max_length = 0
-for i in range(num_sequences):
-    for j in range(num_reads):
-        signal = np.load(f"{data_path}/signal_seq_{i}_read_{j}.npy")
-        max_length = max(max_length, signal.shape[0])
-print(f"{max_length} is the longest length of a read")
+# Loop through different attention dimensions
+for attention_dim in attention_dims:
+    print(f"Training model with attention_dim={attention_dim}")
+    
+    # Initialize model with current attention dimension
+    model = MultiSeqModel(input_length=max_length, tar_length=200, conv_1_dim=10, attention_dim=attention_dim)
+    
+    # Train model and get losses and accuracies
+    losses, accuracies = model.train_model(train_loader, num_epochs=100, learning_rate=0.0005, device=device)
+    
+    # Store results
+    all_losses.append(losses)
+    all_accuracies.append(accuracies)
+    all_attention_dims.append(attention_dim)
 
-# Load, pad, and store signals and sequences
-for i in range(num_sequences):
-    #List initialized
-    sequence_signals = []
-    for j in range(num_reads):
-        # Load signal and pad to max_length
-        signal = np.load(f"{data_path}/signal_seq_{i}_read_{j}.npy")
-        padding_length = max_length - signal.shape[0]
-        padded_signal = np.pad(signal, (0, padding_length), mode='constant', constant_values=0)
-        sequence_signals.append(padded_signal)
-        
-    # Load target sequence
-    signals.append(sequence_signals)
-    seq = np.load(f"{data_path}/signal_seq_{i}_read_{0}_tarseq.npy")
-    seqs.append(seq)
+# Optionally, save the results to disk for later analysis (e.g., using pickle or numpy)
 
-# Convert lists to arrays
-signals = torch.from_numpy(np.array(signals))
-seqs = torch.from_numpy(np.array(seqs))
+np.save('/workspaces/MoBa_FP/Experiments/Attention_Exp_0/all_losses.npy', all_losses)
+np.save('/workspaces/MoBa_FP/Experiments/Attention_Exp_0/all_accuracies.npy', all_accuracies)
+np.save('/workspaces/MoBa_FP/Experiments/Attention_Exp_0/all_attention_dims.npy', all_attention_dims)
 
-signals = signals.view(signals.shape[0], signals.shape[1], signals.shape[2], 1).float()
-print(signals.shape)
-print(seqs.shape)
-model = MultiSeqModel(max_length, 200)
-
-# input_tensor_example = tf.convert_to_tensor(signal.reshape((1, len(signals[0]), 1)), dtype=tf.float32)
-# signals = tf.convert_to_tensor(signals.reshape(signals.shape[0], signals.shape[1], 1), dtype=tf.float32)  # Form: (100, 2795, 1)
-# seqs = tf.convert_to_tensor(seqs, dtype=tf.int32)  # Sequenzen als integer-Indizes für CTC Loss
-
-
-model = MultiSeqModel(input_length=max_length, tar_length=200)
-dataset = TensorDataset(signals, seqs)
-train_loader = DataLoader(dataset, batch_size=2, shuffle=True)
-model.train_model(train_loader, num_epochs=20, learning_rate=0.001)
-# Test forward pass with dummy input
-# dummy_input = torch.randn(32, 10, input_length, 1)  # Batch of 32, 10 sequences, example length, 1 channel
-# print(dummy_input.shape)
-
-# output = model(dummy_input)
-# print(output.shape)
+print("Training of all models completed!")
