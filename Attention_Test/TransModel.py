@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 class MultiSeqModel(nn.Module):
-    def __init__(self, input_length, tar_length, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40):
+    def __init__(self, input_length, tar_length, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40, n_heads = 10):
         super(MultiSeqModel, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
@@ -18,8 +18,8 @@ class MultiSeqModel(nn.Module):
         self.max_pool = nn.MaxPool2d(kernel_size=(1, 2))
         
         # Attention layers
-        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
-        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
+        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
+        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
         
         # Feedforward layers
         self.fc1 = nn.Linear(int(input_length/2) * attention_dim, int(input_length/2) * 5 )

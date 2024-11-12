@@ -11,7 +11,7 @@ def get_device(gpu_index=1):
         print("Using CPU")
     return device
 
-def get_data_loader(data_path_numpy,end_sequence,start_sequence = 0, num_reads = 10):
+def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10):
     signals = []
     seqs = []
 
@@ -51,6 +51,6 @@ def get_data_loader(data_path_numpy,end_sequence,start_sequence = 0, num_reads =
     seqs = torch.from_numpy(np.array(seqs))
     signals = signals.view(signals.shape[0], signals.shape[1], signals.shape[2], 1).float()
     dataset = TensorDataset(signals, seqs)
-    train_loader = DataLoader(dataset, batch_size=32, shuffle=True)
+    train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
     return max_length, train_loader

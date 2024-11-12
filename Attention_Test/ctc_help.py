@@ -96,7 +96,7 @@ y_pred_2  = np.array([[
         [[100, -100, -100]] #0
     ])
 
-targ = np.array([[1, 2]])
+targ = np.array([[1, 2, 1,2,1]])
 #log_probs = torch.randn(4, 1, 3)  # (T, N, C)
 log_probs = torch.from_numpy(y_pred_2).float()
 log_probs = F.log_softmax(log_probs)
@@ -109,7 +109,7 @@ target_lengths = torch.tensor([2] * 1)  # (N)
 
 print(log_probs.numpy())
 print(targets.numpy())
-
+print()
 
 # Calculate CTC loss
 loss = ctc_loss(log_probs, targets, input_lengths, target_lengths)
