@@ -2,6 +2,14 @@ from torch.utils.data import DataLoader, TensorDataset
 import torch 
 import numpy as np
 
+def get_device(gpu_index=1):
+    if torch.cuda.is_available() and gpu_index < torch.cuda.device_count():
+        device = torch.device(f'cuda:{gpu_index}')  # Use GPU with the specified index
+        print(f"Using GPU: {torch.cuda.get_device_name(gpu_index)}")
+    else:
+        device = torch.device('cpu')  # Fall back to CPU if GPU is not available or invalid index
+        print("Using CPU")
+    return device
 
 def get_data_loader(data_path_numpy,end_sequence,start_sequence = 0, num_reads = 10):
     signals = []
