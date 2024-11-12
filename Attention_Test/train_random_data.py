@@ -14,9 +14,11 @@ device = get_device(gpu_index=1)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 max_length, train_loader = get_data_loader(data_path,100)
 # Set up the range for attention dimensions
-attention_dims = range(20, 151, 5)  # Attention dimensions from 20 to 250, step 10
+attention_dims = range(20, 151, 10)  # Attention dimensions from 20 to 250, step 10
 
+print(attention_dims)
 # Initialize empty lists to store results
+
 all_losses = []
 all_accuracies = []
 all_attention_dims = []
