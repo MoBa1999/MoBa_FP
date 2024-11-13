@@ -13,7 +13,7 @@ device = get_device(gpu_index=1)
 device = None
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,100)
+max_length, train_loader = get_data_loader(data_path,batch_size=4)
 # Set up the range for attention dimensions
 heads  = [1, 2, 3, 4, 6, 8, 9, 12, 18, 24, 36]  # Attention dimensions from 20 to 250, step 10
 
