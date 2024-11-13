@@ -28,7 +28,7 @@ def vectors_to_sequence(vectors):
     sequence = ''.join([vector_to_base(vec) for vec in vectors])
     return sequence
 
-def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10, overwrite_max_length = None):
+def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10, overwrite_max_length = None, dim_squeeze=False):
     signals = []
     seqs = []
 
@@ -72,7 +72,7 @@ def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence 
     signals = torch.from_numpy(np.array(signals))
     seqs = torch.from_numpy(np.array(seqs))
     signals = signals.view(signals.shape[0], signals.shape[1], signals.shape[2], 1).float()
-    if num_reads == 1:
+    if num_reads == 1 or dim_squeeze:
         signals = signals.squeeze(3)
     dataset = TensorDataset(signals, seqs)
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
