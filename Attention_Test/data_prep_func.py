@@ -28,7 +28,7 @@ def vectors_to_sequence(vectors):
     sequence = ''.join([vector_to_base(vec) for vec in vectors])
     return sequence
 
-def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10):
+def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10, overwrite_max_length = None):
     signals = []
     seqs = []
 
@@ -40,6 +40,11 @@ def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence 
             signal = np.load(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy")
             max_length = max(max_length, signal.shape[0])
     print(f"{max_length} is the longest length of a read")
+
+    if overwrite_max_length:
+        if overwrite_max_length > max_length:
+            print("Max Length is overwritten")
+            max_length = overwrite_max_length
 
     # Load, pad, and store signals and sequences
     for i in range(start_sequence, end_sequence):
