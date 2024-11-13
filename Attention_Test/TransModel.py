@@ -81,7 +81,9 @@ class MultiSeqModel(nn.Module):
 
         # Move the model to the selected device
         if device:
+            print("Moved to dvice")
             self.to(device)
+            
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0

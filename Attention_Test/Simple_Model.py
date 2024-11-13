@@ -28,8 +28,7 @@ class BasicModel(nn.Module):
         #FF and output
         x = self.flatten(x)
         x = self.fc1(x)
-        #Reshape for 
-        x = x.view(4, 200, 4)
+        
         x = self.softmax(x)
         return x
     
@@ -48,7 +47,10 @@ class BasicModel(nn.Module):
 
         # Move the model to the selected device
         if device:
+            print("Moved to Device")
             self.to(device)
+            for block in self.cnn_blocks:
+                block.to(device)
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
