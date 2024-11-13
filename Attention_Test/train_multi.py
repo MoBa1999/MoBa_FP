@@ -12,15 +12,15 @@ from eval_utils import evaluate_model
 from eval_utils import plot_training_curves
 
 device = get_device(gpu_index=2)
-
+device = None
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,1000, batch_size = 32, num_reads=2)
+max_length, train_loader = get_data_loader(data_path,1000, batch_size = 32, num_reads=2, dim_squeeze=True)
 
 
 model = BasicMulti(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=2)
     
     # Train model and get losses and accuracies
-losses, accuracies = model.train_model(train_loader, num_epochs=200, learning_rate=0.0005, device=device)
+losses, accuracies = model.train_model(train_loader, num_epochs=50, learning_rate=0.0005, device=device)
 
 criterion = nn.CrossEntropyLoss()  # Define loss function for evaluation
 eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device)

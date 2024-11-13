@@ -5,28 +5,31 @@ import numpy as np
 
 def plot_training_and_test_metrics(output_dir):
     # Load the saved data
-    losses = np.load(os.path.join(output_dir, "losses.npy"))
-    accuracies = np.load(os.path.join(output_dir, "accuracies.npy"))
-    test_loss = np.load(os.path.join(output_dir, "test_loss.npy"))
-    test_accuracy = np.load(os.path.join(output_dir, "test_accuracy.npy"))
-    
+    losses = np.load(os.path.join(output_dir, "training_losses.npy"))
+    accuracies = np.load(os.path.join(output_dir, "training_accuracies.npy"))
+    test_loss = np.load(os.path.join(output_dir, "test_losses.npy"))
+    test_accuracy = np.load(os.path.join(output_dir, "test_accuracies.npy"))
+    seqs = np.load(os.path.join(output_dir, "end_seqs.npy"))
     # Plot training accuracy and loss over sequences
     plt.figure(figsize=(12, 6))
     
     # Training loss plot
     plt.subplot(1, 2, 1)
-    plt.plot(losses, label="Training Loss", color='blue')
-    plt.plot(accuracies, label="Training Accuracy", color='orange')
-    plt.xlabel("Sequences")
+    #plt.plot(seqs,losses, label="Training Loss", color='blue')
+    plt.plot(seqs,accuracies, label="Training Accuracy", color='orange')
+    plt.xlim(0,20000)
+    plt.xlabel("Training Sequences")
     plt.ylabel("Loss / Accuracy")
     plt.title("Training Loss and Accuracy over Sequences")
     plt.legend()
     
     # Test loss and accuracy plot
     plt.subplot(1, 2, 2)
-    plt.plot(test_loss, label="Test Loss", color='blue')
-    plt.plot(test_accuracy, label="Test Accuracy", color='orange')
-    plt.xlabel("Sequences")
+    #plt.plot(seqs,test_loss, label="Test Loss", color='blue')
+    plt.plot(seqs,test_accuracy, label="Test Accuracy", color='orange')
+    plt.xlim(0,20000)
+    plt.ylim(40,100)
+    plt.xlabel("Training Sequences")
     plt.ylabel("Loss / Accuracy")
     plt.title("Test Loss and Accuracy over Sequences")
     plt.legend()
@@ -90,3 +93,6 @@ def evaluate_model(model, data_loader, criterion, device):
     accuracy = 100 * correct_predictions / total_predictions
 
     return avg_loss, accuracy
+
+
+
