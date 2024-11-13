@@ -14,7 +14,7 @@ from eval_utils import plot_training_curves
 device = get_device(gpu_index=1)
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,500, batch_size = 32, num_reads=1)
+max_length, train_loader = get_data_loader(data_path,1000, batch_size = 32, num_reads=1)
 
 
 model = BasicModel(input_length=max_length, tar_length=200,d_model = 64, cnn_blocks = 3, max_pool_id = 1)
@@ -28,8 +28,7 @@ eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device
 # Print evaluation results
 print(f"Training Loss: {eval_loss:.4f}, Training Accuracy: {eval_accuracy:.2f}%")
 
-max_length, train_loader = get_data_loader(data_path,end_sequence=1001,start_sequence=501, batch_size = 32, num_reads=1)
+max_length, train_loader = get_data_loader(data_path,end_sequence=1500,start_sequence=1000, batch_size = 32, num_reads=1)
 eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device)
 
 print(f"Test Loss: {eval_loss:.4f}, Test Accuracy: {eval_accuracy:.2f}%")
-plot_training_curves(losses,accuracies)
