@@ -16,12 +16,12 @@ log_probs_data = np.array([
 
 
 log_probs_data = np.array([
-    [[-1.9, -0.5, -1.8, -1.6, -2.2]],
-    [[-1.7, -0.4, -1.9, -1.8, -2.2]],
-    [[-1.6, -0.1, -1.7, -1.9, -1.1]],
-    [[-1.8, -0.3, -1.3, -1.3, -1.6]],
-    [[-0.2, -1.2, -0.3, -1.5, -1.8]],
-    [[-0.2, -1.2, -1.9, -1.5, -1.2]],
+    [[-1.9, -0.5, -1.8, -1.6, -0.01]],
+    [[-1.7, -0.4, -1.9, -1.8, -0.01]],
+    [[-1.6, -0.01, -1.7, -1.9, -1.1]],
+    [[-1.8, -1.3, -0.01, -1.3, -1.6]],
+    [[-0.01, -1.2, -0.3, -1.5, -2.11]],
+    [[-2.2, -0.01, -1.9, -1.5, -5.1]],
 
 ])
 
@@ -29,12 +29,12 @@ log_probs = torch.tensor(log_probs_data).float()
 
 # Targets
 targets = torch.tensor([
-    [4, 4, 1, 2, 4, 1]]).float()
+    [4, 4, 1, 2, 4]]).float()
 
 
 
 input_lengths = torch.tensor([6])  # Assuming 200 time steps for each sample
-target_lengths = torch.tensor([6])  # Assuming 200 target characters for each sample
+target_lengths = torch.tensor([5])  # Assuming 200 target characters for each sample
 
 # Calculate CTC Loss
 loss = F.ctc_loss(log_probs, targets, input_lengths, target_lengths)
