@@ -9,10 +9,11 @@ class BasicModel(nn.Module):
         self.d_model = d_model
         self.tar_len = tar_length
         self.first_cnn = nn.Conv1d(in_channels=1, out_channels=d_model, kernel_size=1, padding=0)
+        self.cnn_layer = nn.Conv1d(in_channels=d_model, out_channels=d_model, kernel_size=3, padding="same")
         self.first_relu = nn.ReLU()
         self.max_pool_id = max_pool_id
         self.max_pool = nn.MaxPool1d(kernel_size=2)
-        self.cnn_blocks = [ResiBlock([1,3,1], d_model, i) for i in range(cnn_blocks)]
+        #self.cnn_blocks = [ResiBlock([1,3,1], d_model, i) for i in range(cnn_blocks)]
         self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         self.fc1 = nn.Linear(d_model * int(input_length/2), classes * tar_length)
         self.softmax = nn.Softmax(dim=-1)
@@ -20,14 +21,18 @@ class BasicModel(nn.Module):
     def forward(self, x):
         x = self.first_cnn(x)
         x = self.first_relu(x)
-        for i, cnn_block in enumerate(self.cnn_blocks):
-            x = cnn_block(x)
+        x = self.cnn_layer(x)
+        x = self.max_pool(x)
+        x = self.cnn_layer(x)
+        # for i, cnn_block in enumerate(self.cnn_blocks):
+        #     x = cnn_block(x)
             
-            if i == self.max_pool_id:
-                x = self.max_pool(x)
+        #     if i == self.max_pool_id:
+        #         x = self.max_pool(x)
         
         #FF and output
         x = self.flatten(x)
+        #print(x.shape)
         x = self.fc1(x)
         x = x.view(-1,self.tar_len,4)
         x = self.softmax(x)
@@ -50,8 +55,8 @@ class BasicModel(nn.Module):
         if device:
             print("Moved to Device")
             self.to(device)
-            for block in self.cnn_blocks:
-                block.to(device)
+            # for block in self.cnn_blocks:
+            #     block.to(device)
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
@@ -68,7 +73,9 @@ class BasicModel(nn.Module):
                 outputs = self(inputs)  # Forward pass
                 # Reshape outputs and labels to match the dimensions expected by CrossEntropyLoss
                 loss = criterion(outputs.float(), labels.float())
-                print(f"Current loss in batch: {loss}")
+                #print(outputs.float())
+                #print(labels.float())
+                #print(f"Current loss in batch: {loss}")
 
                 loss.backward()  # Backward pass
                 optimizer.step()  # Update weights

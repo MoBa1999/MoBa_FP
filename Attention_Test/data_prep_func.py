@@ -10,6 +10,23 @@ def get_device(gpu_index=1):
         device = torch.device('cpu')  # Fall back to CPU if GPU is not available or invalid index
         print("Using CPU")
     return device
+def vector_to_base(vector):
+    """Konvertiert einen 4-dimensionalen Vektor in die entsprechende Base (A, T, C, G)."""
+    if vector == [1, 0, 0, 0]:
+        return 'A'
+    elif vector == [0, 1, 0, 0]:
+        return 'T'
+    elif vector == [0, 0, 1, 0]:
+        return 'C'
+    elif vector == [0, 0, 0, 1]:
+        return 'G'
+    else:
+        return None  # Falls der Vektor ungültig ist
+
+def vectors_to_sequence(vectors):
+    """Konvertiert eine Liste von 4-dimensionalen Vektoren in eine DNA-Sequenz als String."""
+    sequence = ''.join([vector_to_base(vec) for vec in vectors])
+    return sequence
 
 def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10):
     signals = []
