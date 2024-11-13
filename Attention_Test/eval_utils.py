@@ -1,5 +1,7 @@
 import torch 
 import matplotlib.pyplot as plt
+import os 
+import numpy as np
 
 def plot_training_curves(losses, accuracies):
     """Plots training loss and accuracy curves.
