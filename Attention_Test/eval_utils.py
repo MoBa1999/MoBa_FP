@@ -3,6 +3,37 @@ import matplotlib.pyplot as plt
 import os 
 import numpy as np
 
+def plot_training_and_test_metrics(output_dir):
+    # Load the saved data
+    losses = np.load(os.path.join(output_dir, "losses.npy"))
+    accuracies = np.load(os.path.join(output_dir, "accuracies.npy"))
+    test_loss = np.load(os.path.join(output_dir, "test_loss.npy"))
+    test_accuracy = np.load(os.path.join(output_dir, "test_accuracy.npy"))
+    
+    # Plot training accuracy and loss over sequences
+    plt.figure(figsize=(12, 6))
+    
+    # Training loss plot
+    plt.subplot(1, 2, 1)
+    plt.plot(losses, label="Training Loss", color='blue')
+    plt.plot(accuracies, label="Training Accuracy", color='orange')
+    plt.xlabel("Sequences")
+    plt.ylabel("Loss / Accuracy")
+    plt.title("Training Loss and Accuracy over Sequences")
+    plt.legend()
+    
+    # Test loss and accuracy plot
+    plt.subplot(1, 2, 2)
+    plt.plot(test_loss, label="Test Loss", color='blue')
+    plt.plot(test_accuracy, label="Test Accuracy", color='orange')
+    plt.xlabel("Sequences")
+    plt.ylabel("Loss / Accuracy")
+    plt.title("Test Loss and Accuracy over Sequences")
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
 def plot_training_curves(losses, accuracies):
     """Plots training loss and accuracy curves.
 
