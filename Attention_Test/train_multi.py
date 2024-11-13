@@ -12,15 +12,14 @@ from eval_utils import evaluate_model
 from eval_utils import plot_training_curves
 
 device = get_device(gpu_index=2)
-device = None
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,1000, batch_size = 32, num_reads=2, dim_squeeze=True)
+max_length, train_loader = get_data_loader(data_path,8000, batch_size = 32, num_reads=2, dim_squeeze=True)
 
 
 model = BasicMulti(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=2)
     
     # Train model and get losses and accuracies
-losses, accuracies = model.train_model(train_loader, num_epochs=50, learning_rate=0.0005, device=device)
+losses, accuracies = model.train_model(train_loader, num_epochs=200, learning_rate=0.0005, device=device)
 
 criterion = nn.CrossEntropyLoss()  # Define loss function for evaluation
 eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device)
@@ -28,7 +27,7 @@ eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device
 # Print evaluation results
 print(f"Training Loss: {eval_loss:.4f}, Training Accuracy: {eval_accuracy:.2f}%")
 
-max_length, train_loader = get_data_loader(data_path,end_sequence=1500,start_sequence=1000, batch_size = 32, num_reads=1)
-eval_loss, eval_accuracy = evaluate_model(model, train_loader, criterion, device)
+max_length, test_loader = get_data_loader(data_path,end_sequence=10000,start_sequence=8000, batch_size = 32, num_reads=2, dim_squeeze= True)
+eval_loss, eval_accuracy = evaluate_model(model, test_loader, criterion, device)
 
 print(f"Test Loss: {eval_loss:.4f}, Test Accuracy: {eval_accuracy:.2f}%")
