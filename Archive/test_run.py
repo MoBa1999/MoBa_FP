@@ -1,4 +1,4 @@
-from OwnModel import Test_Model
+from Archive.OwnModel import Test_Model
 import tensorflow as tf
 import numpy as np
 from Files.attention_utils import create_combined_mask
