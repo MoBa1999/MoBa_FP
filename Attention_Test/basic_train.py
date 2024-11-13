@@ -10,6 +10,7 @@ from data_prep_func import get_device
 
 
 device = get_device(gpu_index=1)
+device = None
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 max_length, train_loader = get_data_loader(data_path,10, batch_size = 2, num_reads=1)

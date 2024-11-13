@@ -7,6 +7,7 @@ class BasicModel(nn.Module):
     def __init__(self, input_length, tar_length, d_model, cnn_blocks=5, classes = 4,max_pool_id = 2):
         super(BasicModel, self).__init__()
         self.d_model = d_model
+        self.tar_len = tar_length
         self.first_cnn = nn.Conv1d(in_channels=1, out_channels=d_model, kernel_size=1, padding=0)
         self.first_relu = nn.ReLU()
         self.max_pool_id = max_pool_id
@@ -28,7 +29,7 @@ class BasicModel(nn.Module):
         #FF and output
         x = self.flatten(x)
         x = self.fc1(x)
-        
+        x = x.view(-1,self.tar_len,4)
         x = self.softmax(x)
         return x
     
@@ -66,7 +67,8 @@ class BasicModel(nn.Module):
 
                 outputs = self(inputs)  # Forward pass
                 # Reshape outputs and labels to match the dimensions expected by CrossEntropyLoss
-                loss = criterion(outputs.view(-1, 4), labels.view(-1, 4).argmax(dim=-1))
+                loss = criterion(outputs.float(), labels.float())
+                print(f"Current loss in batch: {loss}")
 
                 loss.backward()  # Backward pass
                 optimizer.step()  # Update weights
