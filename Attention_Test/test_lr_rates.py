@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-from Simple_Attention import BasicAtt
+from Simple_Multi import BasicMulti
 from data_prep_func import get_data_loader, get_device
 from eval_utils import evaluate_model
 
@@ -11,7 +11,7 @@ device = get_device(gpu_index=0)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 
 # Define range of learning rates
-learning_rates = np.logspace(-4, -1, 20)  # 20 values between 0.0001 and 0.1
+learning_rates = np.logspace(-5, -4, 5)  # 20 values between 0.0001 and 0.1
 
 # Initialize storage for results
 train_losses = []
@@ -24,7 +24,7 @@ for lr in learning_rates:
     max_length, train_loader = get_data_loader(data_path, 1000, batch_size=32, num_reads=1)
     
     # Initialize model
-    model = BasicAtt(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1).to(device)
+    model = BasicMulti(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1).to(device)
     
     # Train model and record losses and accuracies
     losses, accuracies = model.train_model(train_loader, num_epochs=100, learning_rate=lr, device=device)
