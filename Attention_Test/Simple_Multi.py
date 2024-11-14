@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 
 class BasicMulti(nn.Module):
-    def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 2):
+    def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 1):
         super(BasicMulti, self).__init__()
         self.d_model = d_model
         self.tar_len = tar_length
