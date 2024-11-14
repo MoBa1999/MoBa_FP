@@ -2,17 +2,24 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-class BasicMulti(nn.Module):
-    def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 1):
-        super(BasicMulti, self).__init__()
+class BasicAtt(nn.Module):
+    def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 1, n_heads = 4):
+        super(BasicAtt, self).__init__()
         self.d_model = d_model
         self.tar_len = tar_length
+
+        #CNN Layers
         self.first_cnn = nn.Conv1d(in_channels=multi_seq_nr, out_channels=d_model, kernel_size=1, padding=0)
-        self.cnn_layer = nn.Conv1d(in_channels=d_model, out_channels=d_model, kernel_size=3, padding="same")
+        self.cnn_layer_1 = nn.Conv1d(in_channels=d_model, out_channels=d_model, kernel_size=3, padding="same")
+        self.cnn_layer_2 = nn.Conv1d(in_channels=d_model, out_channels=d_model, kernel_size=3, padding="same")
         self.first_relu = nn.ReLU()
         self.max_pool_id = max_pool_id
         self.max_pool = nn.MaxPool1d(kernel_size=2)
-        #self.cnn_blocks = [ResiBlock([1,3,1], d_model, i) for i in range(cnn_blocks)]
+
+        encoder_layer = nn.TransformerEncoderLayer(d_model=d_model, nhead=n_heads)
+        #Transformer Encoder with multiple layers
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=1)
+        #Flatten, Feedforward and Softmax
         self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         self.fc1 = nn.Linear(d_model * int(input_length/2), classes * tar_length)
         self.softmax = nn.Softmax(dim=-1)
@@ -23,9 +30,14 @@ class BasicMulti(nn.Module):
         x = self.first_cnn(x)
         x = self.first_relu(x)
         #2 CNN Layer + Maxpool
-        x = self.cnn_layer(x)
+        x = self.cnn_layer_1(x)
         x = self.max_pool(x)
-        x = self.cnn_layer(x)
+        x = self.cnn_layer_2(x)
+
+        #Reshape and use self attention
+        x = x.permute(2,0,1)
+        x = self.transformer(x)
+        x = x.permute(1, 0, 2)
         #FF and output
         x = self.flatten(x)
         x = self.fc1(x)
