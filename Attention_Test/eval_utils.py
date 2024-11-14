@@ -9,33 +9,28 @@ def plot_training_and_test_metrics(output_dir):
     accuracies = np.load(os.path.join(output_dir, "training_accuracies.npy"))
     test_loss = np.load(os.path.join(output_dir, "test_losses.npy"))
     test_accuracy = np.load(os.path.join(output_dir, "test_accuracies.npy"))
-    seqs = np.load(os.path.join(output_dir, "end_seqs.npy"))
-    # Plot training accuracy and loss over sequences
-    plt.figure(figsize=(12, 6))
-    
+    seqs = np.load(os.path.join(output_dir, "seq_in.npy"))
+    # Plot training accuracy and loss over
     # Training loss plot
     plt.subplot(1, 2, 1)
     #plt.plot(seqs,losses, label="Training Loss", color='blue')
-    plt.plot(seqs,accuracies, label="Training Accuracy", color='orange')
-    plt.xlim(0,20000)
-    plt.xlabel("Training Sequences")
+    plt.plot(seqs,accuracies, label="Training Accuracy")
+    plt.xlabel("Count of Input Seqs")
     plt.ylabel("Loss / Accuracy")
-    plt.title("Training Loss and Accuracy over Sequences")
+    plt.title("Training Loss/Accuracy over inputs")
     plt.legend()
     
     # Test loss and accuracy plot
     plt.subplot(1, 2, 2)
     #plt.plot(seqs,test_loss, label="Test Loss", color='blue')
     plt.plot(seqs,test_accuracy, label="Test Accuracy", color='orange')
-    plt.xlim(0,20000)
-    plt.ylim(40,100)
-    plt.xlabel("Training Sequences")
+    plt.xlabel("Count of Input Seqs")
     plt.ylabel("Loss / Accuracy")
-    plt.title("Test Loss and Accuracy over Sequences")
+    plt.title("Test Loss/Accuracy over inputs")
     plt.legend()
     
     plt.tight_layout()
-    plt.show()
+    #plt.show()
 
 def plot_training_curves(losses, accuracies):
     """Plots training loss and accuracy curves.
@@ -57,8 +52,7 @@ def plot_training_curves(losses, accuracies):
 
     # Plot training accuracy
     plt.subplot(1, 2, 2)
-    plt.plot(accuracies,  
-    label='Training Accuracy')
+    plt.plot(accuracies, label='Training Accuracy')
     plt.xlabel('Epoch')
     plt.ylabel('Accuracy')
     plt.title('Training Accuracy')
@@ -95,4 +89,4 @@ def evaluate_model(model, data_loader, criterion, device):
     return avg_loss, accuracy
 
 
-
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp4")
