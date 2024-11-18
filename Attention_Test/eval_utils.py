@@ -3,19 +3,19 @@ import matplotlib.pyplot as plt
 import os 
 import numpy as np
 
-def plot_training_and_test_metrics(output_dir):
+def plot_training_and_test_metrics(output_dir, label = None):
     # Load the saved data
     losses = np.load(os.path.join(output_dir, "training_losses.npy"))
     accuracies = np.load(os.path.join(output_dir, "training_accuracies.npy"))
     test_loss = np.load(os.path.join(output_dir, "test_losses.npy"))
     test_accuracy = np.load(os.path.join(output_dir, "test_accuracies.npy"))
-    seqs = np.load(os.path.join(output_dir, "seq_in.npy"))
+    seqs = np.load(os.path.join(output_dir, "end_seqs.npy"))
     # Plot training accuracy and loss over
     # Training loss plot
     plt.subplot(1, 2, 1)
     #plt.plot(seqs,losses, label="Training Loss", color='blue')
     plt.plot(seqs,accuracies, label="Training Accuracy")
-    plt.xlabel("Count of Input Seqs")
+    plt.xlabel("Training Sequences")
     plt.ylabel("Loss / Accuracy")
     plt.title("Training Loss/Accuracy over inputs")
     plt.legend()
@@ -23,9 +23,13 @@ def plot_training_and_test_metrics(output_dir):
     # Test loss and accuracy plot
     plt.subplot(1, 2, 2)
     #plt.plot(seqs,test_loss, label="Test Loss", color='blue')
-    plt.plot(seqs,test_accuracy, label="Test Accuracy", color='orange')
-    plt.xlabel("Count of Input Seqs")
+    if label:
+        plt.plot(seqs,test_accuracy, label=label)
+    else:
+        plt.plot(seqs,test_accuracy, label="Test Accuracy")
+    plt.xlabel("Training Sequences")
     plt.ylabel("Loss / Accuracy")
+    plt.ylim(40,100)
     plt.title("Test Loss/Accuracy over inputs")
     plt.legend()
     
@@ -89,4 +93,5 @@ def evaluate_model(model, data_loader, criterion, device):
     return avg_loss, accuracy
 
 
-plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp4")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp6")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp5", label="Single")
