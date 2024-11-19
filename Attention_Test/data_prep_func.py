@@ -10,7 +10,27 @@ def get_device(gpu_index=1):
         device = torch.device('cpu')  # Fall back to CPU if GPU is not available or invalid index
         print("Using CPU")
     return device
+
+def decode_ctc_output(ctc_output):
+
+  decoded_sequence = ""
+  for time_step_output in ctc_output:
+    max_index = np.argmax(time_step_output)
+    if max_index == 0:
+      decoded_sequence += "_"
+    elif max_index == 1:
+      decoded_sequence += "A"
+    elif max_index == 2:
+      decoded_sequence += "T"
+    elif max_index == 3:
+      decoded_sequence += "C"
+    elif max_index == 4:
+      decoded_sequence += "G"
+
+  return decoded_sequence
+
 def vector_to_base(vector):
+    vector = vector.tolist()
     """Konvertiert einen 4-dimensionalen Vektor in die entsprechende Base (A, T, C, G)."""
     if vector == [1, 0, 0, 0]:
         return 'A'

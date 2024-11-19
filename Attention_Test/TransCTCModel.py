@@ -124,7 +124,7 @@ class MultiSeqCTCModel(nn.Module):
 
                 test_out = outputs.permute(1,0,2)
                 for b in range(test_out.shape[0]):
-                    col_seq = self.ctc_collapse_probabilities(test_out[b,:,:].detach().numpy())
+                    col_seq = self.ctc_collapse_probabilities(test_out[b,:,:].cpu().detach().numpy())
                     ham_dist += distance(col_seq,labels[b,:])
 
 

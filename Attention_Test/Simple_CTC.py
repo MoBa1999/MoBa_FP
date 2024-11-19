@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
+from Levenshtein import distance
 
 class BasicCTC(nn.Module):
     def __init__(self, input_length, tar_length, d_model_at,d_model_conv,classes = 5,max_pool_id = 2, multi_seq_nr = 1, n_heads = 4):
@@ -50,30 +52,45 @@ class BasicCTC(nn.Module):
     def get_num_params(self, non_embedding=True):
         n_params = sum(p.numel() for p in self.parameters())
         return n_params
+    def ctc_collapse_probabilities(self,prob_sequence, blank_index=0):
+        collapsed_sequence = []
+        prev_class = None
+
+        for prob_vector in prob_sequence:
+            # Find the index of the class with the highest probability
+            current_class = np.argmax(prob_vector)
+            
+            # Skip if it's a blank or the same as the previous class
+            if current_class != blank_index and current_class != prev_class:
+                collapsed_sequence.append(current_class)
+            prev_class = current_class
+
+        return collapsed_sequence
+    
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
         criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         loss_ = []
-        accuracy_ = []
+        ham_dist_ = []
 
         self.train()  # Set model to training mode
 
         if device:
             self.to(device)
-            print("Moved to Device")
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
-            correct_predictions = 0
-            total_predictions = 0
+            total_samples = 0
+            ham_dist = 0
 
             for inputs, labels in train_loader:
                 if device:
                     inputs, labels = inputs.to(device), labels.to(device)
 
                 
-                # Flatten the labels into a single 1D tensor for CTC               
+                # Flatten the labels into a single 1D tensor for CTC
+                
                 labels = torch.argmax(labels, dim=-1) +1
                 target_lengths = torch.tensor([label.size(0) for label in labels], dtype=torch.long).to(device)
                 target_lengths = torch.full((labels.size(0),), 200, dtype=torch.long).to(device)
@@ -83,7 +100,7 @@ class BasicCTC(nn.Module):
 
                 # Reshape outputs for CTC Loss: (T, N, C)
                 outputs = outputs.permute(1, 0, 2)
-                input_lengths = torch.full((outputs.size(1),), self.tar_len *2, dtype=torch.long).to(device)
+                input_lengths = torch.full((outputs.size(1),), 400, dtype=torch.long).to(device)
                 #Labels should be (N,S)
                 # Compute CTC loss
                 loss = criterion(outputs, labels, input_lengths, target_lengths)
@@ -94,20 +111,26 @@ class BasicCTC(nn.Module):
                 #print(f" Caculated CTC Loss {loss.item()}")
 
                 # Optional: Calculate accuracy
-                _, predicted = torch.max(outputs, dim=-1)
+
+                test_out = outputs.permute(1,0,2)
+                for b in range(test_out.shape[0]):
+                    col_seq = self.ctc_collapse_probabilities(test_out[b,:,:].detach().numpy())
+                    ham_dist += distance(col_seq,labels[b,:])
+
+
                 #correct_predictions += (predicted == torch.transpose(labels, 0, 1)).sum().item()
-                correct_predictions += 0
-                total_predictions += sum(target_lengths).item()  # Total labels for accuracy
+                total_samples += inputs.size(0)
 
             avg_loss = epoch_loss / len(train_loader)
-            accuracy = 100 * correct_predictions / total_predictions
+            avg_ham_dist = ham_dist / total_samples
+            theoretical_accuracy = (self.tar_length - avg_ham_dist)/self.tar_length * 100
             loss_.append(avg_loss)
-            accuracy_.append(accuracy)
-
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}% (not implemented)")
+            ham_dist_.append(avg_ham_dist)
             
 
+            print(f"Epoch [{epoch + 1}/{num_epochs}], CTC-Loss: {avg_loss:.4f}, Ham_Distance: {avg_ham_dist:.2f} Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%")
+
         print("Training complete!")
-        return loss_, accuracy_
+        return loss_, ham_dist_
 
 
