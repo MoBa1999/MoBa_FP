@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
-from Simple_Multi import BasicMulti
+from Simple_Attention import BasicAtt
 from data_prep_func import get_data_loader, get_device
 from eval_utils import evaluate_model
 
@@ -24,7 +24,7 @@ for lr in learning_rates:
     max_length, train_loader = get_data_loader(data_path, 1000, batch_size=32, num_reads=1)
     
     # Initialize model
-    model = BasicMulti(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1).to(device)
+    model = BasicAtt(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1).to(device)
     
     # Train model and record losses and accuracies
     losses, accuracies = model.train_model(train_loader, num_epochs=100, learning_rate=lr, device=device)

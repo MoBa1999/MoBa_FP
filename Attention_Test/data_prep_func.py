@@ -72,7 +72,7 @@ def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence 
     signals = torch.from_numpy(np.array(signals))
     seqs = torch.from_numpy(np.array(seqs))
     signals = signals.view(signals.shape[0], signals.shape[1], signals.shape[2], 1).float()
-    if num_reads == 1 or dim_squeeze:
+    if dim_squeeze:
         signals = signals.squeeze(3)
     dataset = TensorDataset(signals, seqs)
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
