@@ -1,83 +1,88 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import numpy as np
+from Levenshtein import distance as distance
 
 class MultiSeqCTCModel(nn.Module):
-    def __init__(self, input_length, tar_length, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40,
+    def __init__(self, input_length, tar_length, classes = 5, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40,
                   tar_len_multiple=2):
         super(MultiSeqCTCModel, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
         self.conv1d_1 = nn.Conv1d(in_channels=1, out_channels=conv_1_dim, kernel_size=1)
-        self.conv1d_2 = nn.Conv1d(in_channels=conv_1_dim, out_channels=10, kernel_size=5, padding = 2)
-
+        self.conv1d_2 = nn.Conv1d(in_channels=conv_1_dim, out_channels=conv_2_dim, kernel_size=3, padding = 1)
+        self.first_relu = nn.ReLU()
+        self.conv1d_3 = nn.Conv1d(in_channels=conv_2_dim, out_channels=attention_dim, kernel_size=3, padding = 1)
         # 2D Convolutional Layers for combined input
-        self.conv2d_1 = nn.Conv2d(in_channels=10, out_channels=conv_2_dim, kernel_size=(10, 3), padding=(0, 1))
-        self.conv2d_2 = nn.Conv2d(in_channels=conv_2_dim, out_channels=attention_dim, kernel_size=(1, 3), padding=(0, 1))
+        
         
         # Max Pooling layer to reduce length by half
         self.max_pool = nn.MaxPool2d(kernel_size=(1, 2))
         
         # Attention layers
-        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
-        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=10)
+        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=8)
+        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=8)
         
+        self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         # Feedforward layers
-        self.fc1 = nn.Linear(int(input_length/2) * attention_dim, int(input_length/2) * 5 )
-        self.fc2 = nn.Linear(int(input_length/2) * 5, 5 * tar_length * tar_len_multiple)
+        self.fc1 = nn.Linear(int(input_length/2) * attention_dim, classes * tar_len_multiple * tar_length)
 
         # Output target length
         self.tar_length = tar_length
         self.tar_len_multiple = tar_len_multiple
+        self.classes = classes
 
     def forward(self, x):
-        batch_size, num_sequences, seq_length, channels = x.size()  # Expected shape: [batch_size, 10, seq_length, 1]
+        batch_size, num_sequences, seq_length = x.size()  # Expected shape: [batch_size, 10, seq_length, 1]
         
         # Apply 1D Conv layers on each sequence individually
-        sequence_outputs = []
-        for seq in range(num_sequences):
-            # Select the sequence and reshape to [batch_size, channels, seq_length] for 1D convolution
-            x_seq = x[:, seq, :, :].permute(0, 2, 1)  # [batch_size, 1, seq_length]
-            x_seq = self.conv1d_1(x_seq)
-            x_seq = self.conv1d_2(x_seq)
-            sequence_outputs.append(x_seq)
-        
-        # Stack the sequence outputs along a new dimension for 2D convolution
-        x = torch.stack(sequence_outputs, dim=2)  # [batch_size, 20, 10, new_seq_length]
-        
-        # Apply 2D Convolutions
-        x = self.conv2d_1(x)
-        x = self.conv2d_2(x)
-
+        x = self.conv1d_1(x)
+        x = self.first_relu(x)
+        x = self.conv1d_2(x)
         # Max Pool to halve the length
         x = self.max_pool(x)
+        x = self.conv1d_3(x)
         
         # Reshape for attention layers
-        batch_size, channels, num_sequences, reduced_length = x.size()
-        x = x.view(batch_size, channels, -1).permute(2, 0, 1)  # [reduced_length * num_sequences, batch_size, channels]
+        x = x.permute(2,0,1)  # [reduced_length * num_sequences, batch_size, channels]
 
         # Apply attention layers
         x, _ = self.attention1(x, x, x)
         x, _ = self.attention2(x, x, x)
-
+        x = x.permute(1,0,2)
         # Feedforward layers
-        x = x.view(batch_size,-1)  # Flatten for linear layers
+        x = self.flatten(x)
+
         x = self.fc1(x)
-        x = self.fc2(x)
         
         # Reshape to output shape [batch_size, tar_length *2 (> target_length), 4]
-        output = x.view(batch_size, self.tar_length * self.tar_len_multiple, 5)
+        output = x.view(batch_size, self.tar_length * self.tar_len_multiple, self.classes)
         
         return output
     def get_num_params(self, non_embedding=True):
         n_params = sum(p.numel() for p in self.parameters())
         return n_params
+    def ctc_collapse_probabilities(self,prob_sequence, blank_index=0):
+        collapsed_sequence = []
+        prev_class = None
+
+        for prob_vector in prob_sequence:
+            # Find the index of the class with the highest probability
+            current_class = np.argmax(prob_vector)
+            
+            # Skip if it's a blank or the same as the previous class
+            if current_class != blank_index and current_class != prev_class:
+                collapsed_sequence.append(current_class)
+            prev_class = current_class
+
+        return collapsed_sequence
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
         criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
         loss_ = []
-        accuracy_ = []
+        ham_dist_ = []
 
         self.train()  # Set model to training mode
 
@@ -86,8 +91,8 @@ class MultiSeqCTCModel(nn.Module):
 
         for epoch in range(num_epochs):
             epoch_loss = 0.0
-            correct_predictions = 0
-            total_predictions = 0
+            total_samples = 0
+            ham_dist = 0
 
             for inputs, labels in train_loader:
                 if device:
@@ -113,22 +118,29 @@ class MultiSeqCTCModel(nn.Module):
                 optimizer.step()
 
                 epoch_loss += loss.item()
-                print(f" Caculated CTC Loss {loss.item()}")
+                #print(f" Caculated CTC Loss {loss.item()}")
 
                 # Optional: Calculate accuracy
-                _, predicted = torch.max(outputs, dim=-1)
+
+                test_out = outputs.permute(1,0,2)
+                for b in range(test_out.shape[0]):
+                    col_seq = self.ctc_collapse_probabilities(test_out[b,:,:].detach().numpy())
+                    ham_dist += distance(col_seq,labels[b,:])
+
+
                 #correct_predictions += (predicted == torch.transpose(labels, 0, 1)).sum().item()
-                correct_predictions += 0
-                total_predictions += sum(target_lengths).item()  # Total labels for accuracy
+                total_samples += inputs.size(0)
 
             avg_loss = epoch_loss / len(train_loader)
-            accuracy = 100 * correct_predictions / total_predictions
+            avg_ham_dist = ham_dist / total_samples
+            theoretical_accuracy = (self.tar_length - avg_ham_dist)/self.tar_length * 100
             loss_.append(avg_loss)
-            accuracy_.append(accuracy)
+            ham_dist_.append(avg_ham_dist)
+            
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
+            print(f"Epoch [{epoch + 1}/{num_epochs}], CTC-Loss: {avg_loss:.4f}, Ham_Distance: {avg_ham_dist:.2f} Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%")
 
         print("Training complete!")
-        return loss_, accuracy_
+        return loss_, ham_dist_
 
 

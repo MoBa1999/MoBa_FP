@@ -93,5 +93,8 @@ def evaluate_model(model, data_loader, criterion, device):
     return avg_loss, accuracy
 
 
-plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp6")
-plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp5", label="Single")
+#plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp6")
+#plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp5", label="Single")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp7", label="Single Simple")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp8", label="Single Attention")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp9", label="5 Input Attention")

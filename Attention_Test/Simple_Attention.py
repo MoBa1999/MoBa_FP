@@ -23,7 +23,7 @@ class BasicAtt(nn.Module):
         self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         self.fc1 = nn.Linear(d_model * int(input_length/2), classes * tar_length)
         self.softmax = nn.Softmax(dim=-1)
-        print(f"Basic Model with {self.get_num_params()} Paramters created.")
+        print(f"Basic Attention Model with {self.get_num_params()} Paramters created.")
 
     def forward(self, x):
         #First CNN

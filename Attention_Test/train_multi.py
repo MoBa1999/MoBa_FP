@@ -1,4 +1,4 @@
-from Simple_Multi import BasicMulti
+from Simple_Attention import BasicAtt
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -11,11 +11,11 @@ from data_prep_func import vectors_to_sequence
 from eval_utils import evaluate_model
 from eval_utils import plot_training_curves
 
-device = get_device(gpu_index=2)
+device = get_device(gpu_index=0)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,110000, batch_size = 32, num_reads=1, dim_squeeze=True)
-model = BasicMulti(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=1)
-_, test_loader = get_data_loader(data_path,end_sequence=110000,start_sequence=100000, batch_size = 32, num_reads=1, dim_squeeze= True)
+max_length, train_loader = get_data_loader(data_path,110000, batch_size = 32, num_reads=5, dim_squeeze=True)
+model = BasicAtt(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=5)
+_, test_loader = get_data_loader(data_path,end_sequence=110000,start_sequence=100000, batch_size = 32, num_reads=5, dim_squeeze= True)
     # Train model and get losses and accuracies
 
 # Initialize lists to store results
@@ -23,11 +23,11 @@ training_losses = []
 training_accuracies = []
 test_losses = []
 test_accuracies = []
-output_dir = "/workspaces/MoBa_FP/Experiments/Exp7"
+output_dir = "/workspaces/MoBa_FP/Experiments/Exp9"
 batch_size = 32
-num_reads = 1
+num_reads = 5
 num_epochs = 75
-learning_rate = 0.00008
+learning_rate = 0.00007
 dim_squeeze = True
 end_sequences = [20000, 40000, 80000, 100000]
 
@@ -37,7 +37,6 @@ for end_sequence in end_sequences:
     
     # Load data
     _, train_loader = get_data_loader(data_path, end_sequence=end_sequence, batch_size=batch_size, num_reads=num_reads, dim_squeeze=dim_squeeze)
-    _, test_loader = get_data_loader(data_path, end_sequence=end_sequence, batch_size=batch_size, num_reads=num_reads, dim_squeeze=dim_squeeze)
     
     # Train model
     losses, accuracies = model.train_model(train_loader, num_epochs=num_epochs, learning_rate=learning_rate, device=device)
