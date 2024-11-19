@@ -11,6 +11,17 @@ def get_device(gpu_index=1):
         print("Using CPU")
     return device
 
+def collapse_string_ctc(input_string):
+ 
+  collapsed_string = ""
+  prev_char = None
+  for char in input_string:
+    if char != "_" and char != prev_char:
+      collapsed_string += char
+    prev_char = char
+
+  return collapsed_string
+
 def decode_ctc_output(ctc_output):
 
   decoded_sequence = ""

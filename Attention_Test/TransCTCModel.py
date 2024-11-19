@@ -81,6 +81,8 @@ class MultiSeqCTCModel(nn.Module):
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
         criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-6)
+
         loss_ = []
         ham_dist_ = []
 
@@ -98,12 +100,10 @@ class MultiSeqCTCModel(nn.Module):
                 if device:
                     inputs, labels = inputs.to(device), labels.to(device)
 
-                
                 # Flatten the labels into a single 1D tensor for CTC
-                
-                labels = torch.argmax(labels, dim=-1) +1
-                target_lengths = torch.tensor([label.size(0) for label in labels], dtype=torch.long).to(device)
+                labels = torch.argmax(labels, dim=-1) + 1
                 target_lengths = torch.full((labels.size(0),), 200, dtype=torch.long).to(device)
+
                 # Forward pass
                 optimizer.zero_grad()
                 outputs = self(inputs).log_softmax(2)
@@ -111,34 +111,39 @@ class MultiSeqCTCModel(nn.Module):
                 # Reshape outputs for CTC Loss: (T, N, C)
                 outputs = outputs.permute(1, 0, 2)
                 input_lengths = torch.full((outputs.size(1),), 400, dtype=torch.long).to(device)
-                #Labels should be (N,S)
+
                 # Compute CTC loss
                 loss = criterion(outputs, labels, input_lengths, target_lengths)
                 loss.backward()
                 optimizer.step()
 
                 epoch_loss += loss.item()
-                #print(f" Caculated CTC Loss {loss.item()}")
 
                 # Optional: Calculate accuracy
-
-                test_out = outputs.permute(1,0,2)
+                test_out = outputs.permute(1, 0, 2)
                 for b in range(test_out.shape[0]):
-                    col_seq = self.ctc_collapse_probabilities(test_out[b,:,:].cpu().detach().numpy())
-                    ham_dist += distance(col_seq,labels[b,:])
+                    col_seq = self.ctc_collapse_probabilities(test_out[b, :, :].cpu().detach().numpy())
+                    ham_dist += distance(col_seq, labels[b, :])
 
-
-                #correct_predictions += (predicted == torch.transpose(labels, 0, 1)).sum().item()
+                # Increment the total number of training samples
                 total_samples += inputs.size(0)
 
+            # Step the scheduler
+            scheduler.step()
+
+            # Calculate epoch statistics
             avg_loss = epoch_loss / len(train_loader)
             avg_ham_dist = ham_dist / total_samples
-            theoretical_accuracy = (self.tar_length - avg_ham_dist)/self.tar_length * 100
+            theoretical_accuracy = (self.tar_length - avg_ham_dist) / self.tar_length * 100
             loss_.append(avg_loss)
             ham_dist_.append(avg_ham_dist)
-            
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], CTC-Loss: {avg_loss:.4f}, Ham_Distance: {avg_ham_dist:.2f} Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%")
+            # Print epoch statistics
+            print(f"Epoch [{epoch + 1}/{num_epochs}], "
+                f"CTC-Loss: {avg_loss:.4f}, "
+                f"Ham_Distance: {avg_ham_dist:.2f}, "
+                f"Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%, "
+                f"LR: {scheduler.get_last_lr()[0]:.6f}")
 
         print("Training complete!")
         return loss_, ham_dist_
