@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import os 
 import subprocess
 import pyslow5
+import torch 
+from Simple_Attention import BasicAtt
 
 
 def plot_squigulator(fasta_folder, blow5_folder, reads_per_sequence):
@@ -39,6 +41,10 @@ signal = plot_squigulator(file,file_blow,1)
 
 
 
+
+model = BasicAtt(input_length=1851, tar_length=200,d_model=64)
+model.load_state_dict(torch.load('model_weights.pth'))
+model.eval()
 
 
 
