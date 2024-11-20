@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt
 import os 
 import numpy as np
+from Levenshtein import distance
 
 def plot_training_and_test_metrics(output_dir, label = None):
     # Load the saved data
@@ -92,6 +93,39 @@ def evaluate_model(model, data_loader, criterion, device):
 
     return avg_loss, accuracy
 
+def evaluate_model_ham(model, data_loader, device):
+    model.eval()  # Set the model to evaluation mode
+    total_loss = 0.0
+    total_hamming_distance = 0
+    total_samples = 0
+
+    with torch.no_grad():  # No need to compute gradients during evaluation
+        for inputs, labels in data_loader:
+            # Move data to the selected device
+            if device:
+                inputs, labels = inputs.to(device), labels.to(device)
+
+            outputs = model(inputs)  # Forward pass
+            # Reshape outputs for decoding and accuracy computation
+            #outputs = outputs.permute(0, 2, 1).log_softmax(1)  # Reshape for sequence decoding
+            for b in range(outputs.shape[0]):
+                # Decode predictions using argmax
+                pred_seq = outputs[b,:,:].cpu().detach().numpy()
+
+                # Collapse predictions to remove consecutive duplicates
+                pred_seq_collapsed = model.ctc_collapse_probabilities(pred_seq)
+
+                # Decode true labels
+                true_seq = labels[b].argmax(dim=-1).cpu().detach().numpy()
+
+                # Compute the Hamming/Levenshtein distance
+                total_hamming_distance += distance(pred_seq_collapsed, true_seq)
+                total_samples += 1
+
+    avg_hamming_distance = total_hamming_distance / total_samples
+    theoretical_accuracy = (model.tar_length - avg_hamming_distance) / model.tar_length * 100
+
+    return theoretical_accuracy
 
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp6")
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp5", label="Single")

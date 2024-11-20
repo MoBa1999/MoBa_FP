@@ -1,4 +1,4 @@
-from Simple_CTC import BasicCTC
+from TransCTCModel import MultiSeqCTCModel
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -10,6 +10,7 @@ from data_prep_func import get_device
 from data_prep_func import vectors_to_sequence
 from data_prep_func import decode_ctc_output
 from data_prep_func import collapse_string_ctc
+from eval_utils import evaluate_model_ham
 from Levenshtein import distance
 
 
@@ -17,25 +18,19 @@ device = get_device(gpu_index=2)
 
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,500, batch_size = 8, dim_squeeze=True, num_reads=1)
+max_length, train_loader = get_data_loader(data_path,500, batch_size = 16, dim_squeeze=True, num_reads=1)
 
-model = BasicCTC(input_length=max_length, tar_length=200, d_model_at=64,d_model_conv=32)
+model = MultiSeqCTCModel(input_length=max_length, tar_length=200, conv_1_dim=16,conv_2_dim=48, attention_dim=64)
 
 
 # 
     # Train model and get losses and accuracies
-losses, hammings = model.train_model(train_loader, num_epochs=400, learning_rate=0.0001, device=device)
-data, target = next(iter(train_loader))
-seq = vectors_to_sequence(target[0].numpy())
-print(f"Soll Sequenz: {seq}")
-first = data[0]
-first = first.to(device)
-output = model(first.unsqueeze(0))
-output = output.cpu().detach().numpy()
-output = output.squeeze(0)
-out = decode_ctc_output(output)
-print(f"Output from CTC: {out}")
-print(f"Collapsed: {collapse_string_ctc(out)}")
+losses, hammings, accuracies = model.train_model(train_loader, num_epochs=200, learning_rate=0.005, device=device)
+
+train_accuracy = evaluate_model_ham(model, train_loader, device)
+print(f"Training Accuracy: {train_accuracy:.2f}%")
+
+
 plt.plot(losses)
 plt.xlabel("Epoch")
 plt.ylabel("Loss")
@@ -46,6 +41,13 @@ plt.figure
 plt.plot(hammings)
 plt.xlabel("Epoch")
 plt.ylabel("Hamming Distance Average")
+plt.title("Training Values")
+plt.show()
+
+plt.figure
+plt.plot(accuracies)
+plt.xlabel("Epoch")
+plt.ylabel("Theoretical Accuracy")
 plt.title("Training Values")
 plt.show()
 

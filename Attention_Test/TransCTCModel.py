@@ -85,6 +85,7 @@ class MultiSeqCTCModel(nn.Module):
 
         loss_ = []
         ham_dist_ = []
+        accs_= []
 
         self.train()  # Set model to training mode
 
@@ -137,6 +138,7 @@ class MultiSeqCTCModel(nn.Module):
             theoretical_accuracy = (self.tar_length - avg_ham_dist) / self.tar_length * 100
             loss_.append(avg_loss)
             ham_dist_.append(avg_ham_dist)
+            accs_.append(theoretical_accuracy)
 
             # Print epoch statistics
             print(f"Epoch [{epoch + 1}/{num_epochs}], "
@@ -146,6 +148,6 @@ class MultiSeqCTCModel(nn.Module):
                 f"LR: {scheduler.get_last_lr()[0]:.6f}")
 
         print("Training complete!")
-        return loss_, ham_dist_
+        return loss_, ham_dist_, accs_
 
 

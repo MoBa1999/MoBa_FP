@@ -1,4 +1,4 @@
-from Simple_Model import BasicModel
+from Archive.Simple_Model import BasicModel
 import numpy as np
 import matplotlib.pyplot as plt
 import os
