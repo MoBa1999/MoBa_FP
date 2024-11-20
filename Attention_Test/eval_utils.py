@@ -116,7 +116,7 @@ def evaluate_model_ham(model, data_loader, device):
                 pred_seq_collapsed = model.ctc_collapse_probabilities(pred_seq)
 
                 # Decode true labels
-                true_seq = labels[b].argmax(dim=-1).cpu().detach().numpy()
+                true_seq = labels[b,:].argmax(dim=-1).cpu().detach().numpy() +1
 
                 # Compute the Hamming/Levenshtein distance
                 total_hamming_distance += distance(pred_seq_collapsed, true_seq)

@@ -18,16 +18,21 @@ device = get_device(gpu_index=2)
 
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,500, batch_size = 16, dim_squeeze=True, num_reads=1)
+max_length, train_loader = get_data_loader(data_path,100, batch_size = 16, dim_squeeze=True, num_reads=1)
+max_length_1, test_loader = get_data_loader(data_path,start_sequence=100, end_sequence=150, batch_size = 16, dim_squeeze=True, num_reads=1)
+max_length = max(max_length,max_length_1)
 
 model = MultiSeqCTCModel(input_length=max_length, tar_length=200, conv_1_dim=16,conv_2_dim=48, attention_dim=64)
 
 
 # 
     # Train model and get losses and accuracies
-losses, hammings, accuracies = model.train_model(train_loader, num_epochs=200, learning_rate=0.005, device=device)
+losses, hammings, accuracies = model.train_model(train_loader, num_epochs=150, learning_rate=0.005, device=device)
 
 train_accuracy = evaluate_model_ham(model, train_loader, device)
+print(f"Training Accuracy: {train_accuracy:.2f}%")
+
+train_accuracy = evaluate_model_ham(model, test_loader, device)
 print(f"Training Accuracy: {train_accuracy:.2f}%")
 
 

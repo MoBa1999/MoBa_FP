@@ -23,13 +23,13 @@ training_losses = []
 training_accuracies = []
 test_losses = []
 test_accuracies = []
-output_dir = "/workspaces/MoBa_FP/Experiments/Exp9"
+output_dir = "/workspaces/MoBa_FP/Experiments/Exp8"
 batch_size = 32
 num_reads = 1
 num_epochs = 75
 learning_rate = 0.00007
 dim_squeeze = True
-end_sequences = [100000]
+end_sequences = [10000, 20000, 40000, 80000, 100000]
 
 # Loop through different end_sequence values
 for end_sequence in end_sequences:
@@ -57,11 +57,11 @@ for end_sequence in end_sequences:
     test_accuracies.append(test_accuracy)
 
 # Save results to .npy files
-# np.save(os.path.join(output_dir, "training_losses.npy"), training_losses)
-# np.save(os.path.join(output_dir, "training_accuracies.npy"), training_accuracies)
-# np.save(os.path.join(output_dir, "test_losses.npy"), test_losses)
-# np.save(os.path.join(output_dir, "test_accuracies.npy"), test_accuracies)
-# np.save(os.path.join(output_dir, "end_seqs.npy"), end_sequences)
+np.save(os.path.join(output_dir, "training_losses.npy"), training_losses)
+np.save(os.path.join(output_dir, "training_accuracies.npy"), training_accuracies)
+np.save(os.path.join(output_dir, "test_losses.npy"), test_losses)
+np.save(os.path.join(output_dir, "test_accuracies.npy"), test_accuracies)
+np.save(os.path.join(output_dir, "end_seqs.npy"), end_sequences)
 
 torch.save(model.state_dict(), 'model_weights.pth')
 
