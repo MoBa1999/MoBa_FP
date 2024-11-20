@@ -251,7 +251,7 @@ def generate_fasta_files(num_files, output_folder, sequences_per_file, bias=0.5)
                 f.write(f">File_{i}_Seq_{j}\n{sequence}\n")
 
 
-num_files = 10000
+num_files = 110000
 fasta_dir = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
 output_folder = "/media/hdd1/MoritzBa/Rd_Data_Fasta"
 sequence_per_file = 1
