@@ -1,4 +1,4 @@
-from TransCTCModel import MultiSeqCTCModel
+from Simple_CTC import BasicCTC
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -17,14 +17,14 @@ device = get_device(gpu_index=2)
 
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,500, batch_size = 16, dim_squeeze=True, num_reads=1)
+max_length, train_loader = get_data_loader(data_path,500, batch_size = 8, dim_squeeze=True, num_reads=1)
 
-model = MultiSeqCTCModel(input_length=max_length, tar_length=200,  conv_1_dim=16,conv_2_dim=48, attention_dim=64)
+model = BasicCTC(input_length=max_length, tar_length=200, d_model_at=64,d_model_conv=32)
 
 
 # 
     # Train model and get losses and accuracies
-losses, hammings = model.train_model(train_loader, num_epochs=150, learning_rate=0.005, device=device)
+losses, hammings = model.train_model(train_loader, num_epochs=400, learning_rate=0.0001, device=device)
 data, target = next(iter(train_loader))
 seq = vectors_to_sequence(target[0].numpy())
 print(f"Soll Sequenz: {seq}")
