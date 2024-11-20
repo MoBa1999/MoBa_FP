@@ -24,7 +24,7 @@ model = MultiSeqCTCModel(input_length=max_length, tar_length=200,  conv_1_dim=16
 
 # 
     # Train model and get losses and accuracies
-losses, accuracies = model.train_model(train_loader, num_epochs=150, learning_rate=0.005, device=device)
+losses, hammings = model.train_model(train_loader, num_epochs=150, learning_rate=0.005, device=device)
 data, target = next(iter(train_loader))
 seq = vectors_to_sequence(target[0].numpy())
 print(f"Soll Sequenz: {seq}")
@@ -41,6 +41,15 @@ plt.xlabel("Epoch")
 plt.ylabel("Loss")
 plt.title("Training Loss")
 plt.show()
+
+plt.figure
+plt.plot(hammings)
+plt.xlabel("Epoch")
+plt.ylabel("Hamming Distance Average")
+plt.title("Training Values")
+plt.show()
+
+
 
 
 # Testing Collapse

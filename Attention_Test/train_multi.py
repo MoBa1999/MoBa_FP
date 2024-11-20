@@ -13,9 +13,9 @@ from eval_utils import plot_training_curves
 
 device = get_device(gpu_index=0)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,110000, batch_size = 32, num_reads=5, dim_squeeze=True)
-model = BasicAtt(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=5)
-_, test_loader = get_data_loader(data_path,end_sequence=110000,start_sequence=100000, batch_size = 32, num_reads=5, dim_squeeze= True)
+max_length, train_loader = get_data_loader(data_path,110000, batch_size = 32, num_reads=1, dim_squeeze=True)
+model = BasicAtt(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=1)
+_, test_loader = get_data_loader(data_path,end_sequence=110000,start_sequence=100000, batch_size = 32, num_reads=1, dim_squeeze= True)
     # Train model and get losses and accuracies
 
 # Initialize lists to store results
@@ -25,7 +25,7 @@ test_losses = []
 test_accuracies = []
 output_dir = "/workspaces/MoBa_FP/Experiments/Exp9"
 batch_size = 32
-num_reads = 5
+num_reads = 1
 num_epochs = 75
 learning_rate = 0.00007
 dim_squeeze = True
