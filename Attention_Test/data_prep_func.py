@@ -70,7 +70,7 @@ def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence 
         for j in range(num_reads):
             signal = np.load(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy")
             max_length = max(max_length, signal.shape[0])
-    print(f"{max_length} is the longest length of a read")
+    print(f"{max_length} is the longest length of a read for dataset with {end_sequence-start_sequence} Sequences")
 
     if overwrite_max_length:
         if overwrite_max_length > max_length:

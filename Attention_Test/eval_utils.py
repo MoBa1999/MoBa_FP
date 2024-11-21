@@ -6,9 +6,9 @@ from Levenshtein import distance
 
 def plot_training_and_test_metrics(output_dir, label = None):
     # Load the saved data
-    losses = np.load(os.path.join(output_dir, "training_losses.npy"))
+    #losses = np.load(os.path.join(output_dir, "training_losses.npy"))
     accuracies = np.load(os.path.join(output_dir, "training_accuracies.npy"))
-    test_loss = np.load(os.path.join(output_dir, "test_losses.npy"))
+    #test_loss = np.load(os.path.join(output_dir, "test_losses.npy"))
     test_accuracy = np.load(os.path.join(output_dir, "test_accuracies.npy"))
     seqs = np.load(os.path.join(output_dir, "end_seqs.npy"))
     # Plot training accuracy and loss over
@@ -67,9 +67,10 @@ def plot_training_curves(losses, accuracies):
     plt.show() 
 
 # Evaluate the model on the whole dataset after training
-def evaluate_model(model, data_loader, criterion, device):
+def evaluate_model(model, data_loader, criterion, device, tar_len=200):
     model.eval()  # Set the model to evaluation mode
     total_loss = 0.0
+    ham_loss = 0
     correct_predictions = 0
     total_predictions = 0
 
@@ -88,10 +89,15 @@ def evaluate_model(model, data_loader, criterion, device):
             correct_predictions += (predicted == labels.argmax(dim=-1)).sum().item()
             total_predictions += labels.size(0) * labels.size(1)
 
+            for b in range(predicted.shape[0]):
+                ham_loss+= distance(predicted[b,:].cpu().detach().numpy(),labels.argmax(dim=-1)[b,:].cpu().detach().numpy())
+
+    avg_ham = ham_loss/ (total_predictions/tar_len)
+    ham_ac = (tar_len - avg_ham)/tar_len * 100
     avg_loss = total_loss / len(data_loader)
     accuracy = 100 * correct_predictions / total_predictions
 
-    return avg_loss, accuracy
+    return avg_loss, accuracy, ham_ac
 
 def evaluate_model_ham(model, data_loader, device):
     model.eval()  # Set the model to evaluation mode
@@ -127,8 +133,11 @@ def evaluate_model_ham(model, data_loader, device):
 
     return theoretical_accuracy
 
+
+
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp6")
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp5", label="Single")
-plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp7", label="Single Simple")
+#plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp7", label="Single Simple")
 plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp8", label="Single Attention")
 plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp9", label="5 Input Attention")
+plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp10", label="1 Input CTC Loss")

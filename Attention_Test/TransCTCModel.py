@@ -78,14 +78,23 @@ class MultiSeqCTCModel(nn.Module):
 
         return collapsed_sequence
     
-    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
+    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, lr_end=1e-6, device=None, scheduler_type="cosine"):
         criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=1e-6)
+
+        # Initialize the chosen scheduler
+        if scheduler_type == "cosine":
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=lr_end)
+        elif scheduler_type == "plateau":
+            scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.1, patience=2, verbose=True)
+        elif scheduler_type == "cosine_restart":
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(optimizer, T_0=10, T_mult=2, eta_min=lr_end)
+        else:
+            raise ValueError(f"Unsupported scheduler_type: {scheduler_type}. Use 'cosine', 'plateau', or 'cosine_restart'.")
 
         loss_ = []
         ham_dist_ = []
-        accs_= []
+        accs_ = []
 
         self.train()  # Set model to training mode
 
@@ -130,7 +139,12 @@ class MultiSeqCTCModel(nn.Module):
                 total_samples += inputs.size(0)
 
             # Step the scheduler
-            scheduler.step()
+            if scheduler_type == "cosine":
+                scheduler.step()
+            elif scheduler_type == "plateau":
+                scheduler.step(epoch_loss)
+            elif scheduler_type == "cosine_restart":
+                scheduler.step(epoch)
 
             # Calculate epoch statistics
             avg_loss = epoch_loss / len(train_loader)
@@ -141,11 +155,21 @@ class MultiSeqCTCModel(nn.Module):
             accs_.append(theoretical_accuracy)
 
             # Print epoch statistics
-            print(f"Epoch [{epoch + 1}/{num_epochs}], "
-                f"CTC-Loss: {avg_loss:.4f}, "
-                f"Ham_Distance: {avg_ham_dist:.2f}, "
-                f"Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%, "
-                f"LR: {scheduler.get_last_lr()[0]:.6f}")
+            if scheduler_type in ["cosine", "cosine_restart"]:
+                print(f"Epoch [{epoch + 1}/{num_epochs}], "
+                    f"CTC-Loss: {avg_loss:.4f}, "
+                    f"Ham_Distance: {avg_ham_dist:.2f}, "
+                    f"Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%, "
+                    f"LR: {scheduler.get_last_lr()[0]:.6f}")
+            else:  # For 'plateau' or other scheduler types
+                print(f"Epoch [{epoch + 1}/{num_epochs}], "
+                    f"CTC-Loss: {avg_loss:.4f}, "
+                    f"Ham_Distance: {avg_ham_dist:.2f}, "
+                    f"Theoretical Accuracy from Hamming: {theoretical_accuracy:.2f}%")
+            
+            if avg_loss <= 0.001:
+                print("Training completed early!")
+                return loss_, ham_dist_, accs_
 
         print("Training complete!")
         return loss_, ham_dist_, accs_

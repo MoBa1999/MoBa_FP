@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
+from Levenshtein import distance
 
 class BasicAtt(nn.Module):
     def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 1, n_heads = 4):
@@ -56,6 +57,7 @@ class BasicAtt(nn.Module):
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)  # Define optimizer
         loss_ = []
         accuracy_= []
+        ham_acc_ = []
 
         self.train()  # Set model to training mode
 
@@ -67,6 +69,7 @@ class BasicAtt(nn.Module):
             #     block.to(device)
 
         for epoch in range(num_epochs):
+            ham_loss = 0
             epoch_loss = 0.0
             correct_predictions = 0
             total_predictions = 0
@@ -95,14 +98,20 @@ class BasicAtt(nn.Module):
                 correct_predictions += (predicted == labels.argmax(dim=-1)).sum().item()
                 total_predictions += labels.size(0) * labels.size(1)  # Total number of labels in the batch
 
+                for b in range(predicted.shape[0]):
+                    ham_loss+= distance(predicted[b,:].cpu().detach().numpy(),labels.argmax(dim=-1)[b,:].cpu().detach().numpy())
+
+            avg_ham = ham_loss/ (total_predictions/ self.tar_len)
             avg_loss = epoch_loss / len(train_loader)
             accuracy = 100 * correct_predictions / total_predictions
+            ham_ac = (self.tar_len - avg_ham)/self.tar_len * 100
             loss_.append(avg_loss)
             accuracy_.append(accuracy)
+            ham_acc_.append(ham_ac)
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%")
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%,  Ham-Accuracy: {ham_ac:.2f}% ")
 
         print("Training complete!")
-        return loss_, accuracy_
+        return loss_, accuracy_,ham_acc_
 
 
