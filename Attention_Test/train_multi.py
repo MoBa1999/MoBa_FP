@@ -13,9 +13,9 @@ from eval_utils import plot_training_curves
 
 device = get_device(gpu_index=2)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,45000, batch_size = 32, num_reads=3, dim_squeeze=True)
+max_length, train_loader = get_data_loader(data_path,45, batch_size = 32, num_reads=1, dim_squeeze=True)
 
-_, test_loader = get_data_loader(data_path,end_sequence=45000,start_sequence=40000, batch_size = 32, num_reads=3, dim_squeeze= True)
+_, test_loader = get_data_loader(data_path,end_sequence=45000,start_sequence=40000, batch_size = 32, num_reads=1, dim_squeeze= True)
     # Train model and get losses and accuracies
 
 # Initialize lists to store results
@@ -23,9 +23,9 @@ training_losses = []
 training_accuracies = []
 test_losses = []
 test_accuracies = []
-output_dir = "/workspaces/MoBa_FP/Experiments/Exp_1_ar"
+output_dir = "/workspaces/MoBa_FP/Experiments/Exp_3_at"
 batch_size = 32
-num_reads = 3
+num_reads = 1
 num_epochs = 75
 learning_rate = 0.00007
 dim_squeeze = True
@@ -64,6 +64,6 @@ np.save(os.path.join(output_dir, "test_losses.npy"), test_losses)
 np.save(os.path.join(output_dir, "test_accuracies.npy"), test_accuracies)
 np.save(os.path.join(output_dir, "end_seqs.npy"), end_sequences)
 
-torch.save(model.state_dict(), '/media/hdd1/MoritzBa/Models/2_in_at.pth')
+torch.save(model.state_dict(), '/media/hdd1/MoritzBa/Models/3_in_at.pth')
 
 print("Model saved.")

@@ -4,10 +4,10 @@ import torch.optim as optim
 import numpy as np
 from Levenshtein import distance as distance
 
-class MultiSeqCTCModel(nn.Module):
+class Model_1(nn.Module):
     def __init__(self, input_length, tar_length, classes = 5, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40,
                   tar_len_multiple=2):
-        super(MultiSeqCTCModel, self).__init__()
+        super(Model_1, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
         self.conv1d_1 = nn.Conv1d(in_channels=1, out_channels=conv_1_dim, kernel_size=1)
@@ -77,6 +77,18 @@ class MultiSeqCTCModel(nn.Module):
             prev_class = current_class
 
         return collapsed_sequence
+    def real_sequence_lengths(self,tensor):
+        real_lengths = []
+        for sequence in tensor:
+            # Zähle die Länge der Sequenz, bis der erste 0,0,0,0 Vektor kommt
+            length = len(sequence)
+            for i in range(len(sequence)):
+                if torch.all(sequence[i] == 0):  # Prüfen, ob der Vektor [0, 0, 0, 0] ist
+                    length = i
+                    break
+            real_lengths.append(length)
+        return real_lengths
+
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, lr_end=1e-6, device=None, scheduler_type="cosine"):
         criterion = nn.CTCLoss(blank=0, reduction='mean', zero_infinity=False)
@@ -109,10 +121,12 @@ class MultiSeqCTCModel(nn.Module):
             for inputs, labels in train_loader:
                 if device:
                     inputs, labels = inputs.to(device), labels.to(device)
-
+                
+                target_lengths = self.real_sequence_lengths(labels)
                 # Flatten the labels into a single 1D tensor for CTC
                 labels = torch.argmax(labels, dim=-1) + 1
-                target_lengths = torch.full((labels.size(0),), self.tar_length, dtype=torch.long).to(device)
+                target_lengths = torch.tensor(target_lengths)
+                print(target_lengths)
 
                 # Forward pass
                 optimizer.zero_grad()

@@ -11,7 +11,7 @@ from data_prep_func import vectors_to_sequence
 from eval_utils import evaluate_model
 from eval_utils import plot_training_curves
 
-device = get_device(gpu_index=1)
+device = get_device(gpu_index=2)
 
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 max_length, train_loader = get_data_loader(data_path,1000, batch_size = 32, num_reads=1)
