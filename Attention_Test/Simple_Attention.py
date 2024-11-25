@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from Levenshtein import distance
-
+from eval_utils import evaluate_model
 class BasicAtt(nn.Module):
     def __init__(self, input_length, tar_length, d_model,classes = 4,max_pool_id = 2, multi_seq_nr = 1, n_heads = 4):
         super(BasicAtt, self).__init__()
@@ -52,12 +52,14 @@ class BasicAtt(nn.Module):
         n_params = sum(p.numel() for p in self.parameters())
         return n_params
     
-    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001, device=None):
+    def train_model(self, train_loader, num_epochs=10, learning_rate=0.001,
+                     device=None, test_set= None, save_path = None):
         criterion = nn.CrossEntropyLoss()  # Define loss function
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)  # Define optimizer
         loss_ = []
         accuracy_= []
         ham_acc_ = []
+        test_acc_ = [0]
 
         self.train()  # Set model to training mode
 
@@ -101,6 +103,13 @@ class BasicAtt(nn.Module):
                 for b in range(predicted.shape[0]):
                     ham_loss+= distance(predicted[b,:].cpu().detach().numpy(),labels.argmax(dim=-1)[b,:].cpu().detach().numpy())
 
+            if test_set:
+                _,_,test_ac = evaluate_model(self,test_set,criterion,device)
+                if test_ac > min(test_acc_):
+                    torch.save(self.state_dict(),save_path)
+                test_acc_.append(test_ac)
+                
+
             avg_ham = ham_loss/ (total_predictions/ self.tar_len)
             avg_loss = epoch_loss / len(train_loader)
             accuracy = 100 * correct_predictions / total_predictions
@@ -109,9 +118,9 @@ class BasicAtt(nn.Module):
             accuracy_.append(accuracy)
             ham_acc_.append(ham_ac)
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%,  Ham-Accuracy: {ham_ac:.2f}% ")
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%,  Lev-Accuracy: {ham_ac:.2f}% ,  Lev-Test-Accuracy: {test_ac:.2f}%")
 
         print("Training complete!")
-        return loss_, accuracy_,ham_acc_
+        return loss_, accuracy_,ham_acc_, test_acc_
 
 
