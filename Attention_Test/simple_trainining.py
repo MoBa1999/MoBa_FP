@@ -20,7 +20,7 @@ num_reads = 10
 num_epochs = 75
 learning_rate = 0.00007
 dim_squeeze = True
-train_seqs = 10000
+train_seqs = 40000
 test_seqs = 10000
 num_epochs = 75
 batch_size = 16
@@ -38,11 +38,12 @@ Training Sequences: {train_seqs}
 Testing Sequences: {test_seqs}
 """)
 #Prep
-device = get_device(gpu_index=1)
+device = get_device(gpu_index=0)
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
-max_length, train_loader = get_data_loader(data_path,train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze=True)
-max_2, test_loader = get_data_loader(data_path,end_sequence=train_seqs+test_seqs,start_sequence=train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze= True)
-max_length = max(max_length, max_2)
+max_length = 2000
+max_length, train_loader = get_data_loader(data_path,train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze=True, overwrite_max_length = max_length)
+max_2, test_loader = get_data_loader(data_path,end_sequence=train_seqs+test_seqs,start_sequence=train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze= True, overwrite_max_length= max_length)
+
 
 #Create Model and Train
 model = BasicAtt(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=num_reads)
