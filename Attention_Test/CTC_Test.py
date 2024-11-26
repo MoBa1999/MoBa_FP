@@ -5,10 +5,10 @@ import numpy as np
 from Levenshtein import distance as distance
 from eval_utils import evaluate_model_ham
 
-class MultiCTC(nn.Module):
+class CTC_Test_Model(nn.Module):
     def __init__(self, input_length, tar_length, classes = 5, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40,
-                  tar_len_multiple=2, num_reads = 1):
-        super(MultiCTC, self).__init__()
+                  tar_len_multiple=2, num_reads = 1, n_heads = 8):
+        super(CTC_Test_Model, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
         self.conv1d_1 = nn.Conv1d(in_channels=num_reads, out_channels=conv_1_dim, kernel_size=1)
@@ -22,8 +22,8 @@ class MultiCTC(nn.Module):
         self.max_pool = nn.MaxPool2d(kernel_size=(1, 2))
         
         # Attention layers
-        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=8)
-        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=8)
+        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
+        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
         
         self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         # Feedforward layers
@@ -33,6 +33,7 @@ class MultiCTC(nn.Module):
         self.tar_length = tar_length
         self.tar_len_multiple = tar_len_multiple
         self.classes = classes
+        print("Multi-CTC Model was initialized.")
 
     def forward(self, x):
         batch_size, num_sequences, seq_length = x.size()  # Expected shape: [batch_size, 10, seq_length, 1]

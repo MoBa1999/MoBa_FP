@@ -97,25 +97,21 @@ def plot_training_curves_separate(losses, n_accuracies, ham_accuracies, test_acc
     plt.ylabel('N-Accuracy')
     plt.title('N-Accuracy')
 
+
   # Plot Ham-accuracies
   plt.subplot(2, 2, 3)
-  plt.plot(ham_accuracies)
+  plt.plot(ham_accuracies, label = "Train Lev Accuracy")
+  if test_accs:
+      plt.plot(test_accs, label='Test Lev Accuracy', color='orange')
   plt.xlabel('Epoch')
   plt.ylabel('Lev-Accuracy')
   plt.title('Lev-Accuracy')
-
-  # Plot test accuracies (if available)
-  if test_accs:
-    plt.subplot(2, 2, 4)
-    plt.plot(test_accs)
-    plt.xlabel('Epoch')
-    plt.ylabel('Test Accuracy')
-    plt.title('Test Accuracy')
-
+  plt.legend()
   plt.tight_layout()
   plt.show()
   if save_path:
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
+    print(f"Plot saved at {save_path}")
 # Evaluate the model on the whole dataset after training
 def evaluate_model(model, data_loader, criterion, device, tar_len=200):
     model.eval()  # Set the model to evaluation mode
@@ -197,4 +193,4 @@ def show_im(path):
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp10", label="1 Input CTC Loss")
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp_real_1", label="Real Data - 1 Input CTC Loss")
 #show_im("/media/hdd1/MoritzBa/Plots/10000_s_75_ep.png")
-#show_im("/media/hdd1/MoritzBa/Plots/20000_s_75_ep_10_r.png")
+show_im("/media/hdd1/MoritzBa/Plots/40000_s_75_ep_1_r.png")

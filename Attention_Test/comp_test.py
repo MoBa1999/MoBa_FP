@@ -10,48 +10,59 @@ from torch import nn
 import matplotlib.pyplot as plt
 from Simple_Attention import BasicAtt
 
-test_path = "/media/hdd1/MoritzBa/Test_Data/Rd_Data_Numpy"
+#test_path = "/media/hdd1/MoritzBa/Test_Data/Rd_Data_Numpy"
+test_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
+
 model_path_general = "/media/hdd1/MoritzBa/Models"
 
-max_length, test_loader = get_data_loader(test_path, 20000, batch_size=32, num_reads=1)
 
-models = [
-    "10000_s_75_ep.pth", "10000_s_75_ep_5_r.pth", "20000_s_75_ep_2_r.pth", "40000_s_75_ep_10_r.pth",
-    "10000_s_75_ep_10_r.pth", "20000_s_75_ep.pth", "20000_s_75_ep_5_r.pth", "40000_s_75_ep_2_r.pth",
-    "10000_s_75_ep_2_r.pth", "20000_s_75_ep_10_r.pth", "40000_s_75_ep.pth", "40000_s_75_ep_5_r.pth"
-]
-labels = ['10000 Seqs - 1 R/S', '10000 Seqs - 5 R/S', '20000 Seqs - 2 R/S', '40000 Seqs - 10 R/S',
-          '10000 Seqs - 10 R/S', '20000 Seqs - 1 R/S', '20000 Seqs - 5 R/S', '40000 Seqs - 2 R/S',
-          '10000 Seqs - 2 R/S', '20000 Seqs - 10 R/S', '40000 Seqs - 75 R/S', '40000 Seqs - 5 R/S']
-nr = [1,5,2,10,10,1,5,2,2,10,1,5]
-seqs = [10000, 10000, 20000, 40000, 10000, 20000, 20000, 40000, 10000, 20000, 40000, 40000]
+test_lev_accuracies = {}
+
+seqs = [10000, 20000, 40000]
+nr = [1, 2, 5, 10]
 device = get_device(gpu_index=1)
+max_length = 2000
 
-test_lev_accuracies = []
+# Initialisiere die Struktur
+for r in nr:
+    test_lev_accuracies[r] = []
 
-for model_name, rs in zip(models,nr):
-    model_path = os.path.join(model_path_general, model_name)
-    print(f"The following model is analyzed: {model_path}" )
-    model = BasicAtt(input_length=max_length, tar_length=200,d_model = 64, max_pool_id = 1, multi_seq_nr=rs)
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
+for seq in seqs:
+    for r in nr:
+        model_name = f"{seq}_s_75_ep_{r}_r.pth"
+        model_path = os.path.join(model_path_general, model_name)
+        print(f"The following model is analyzed: {model_path}")
+        
+        _, test_loader = get_data_loader(test_path, end_sequence=42000,start_sequence=40000, batch_size=32, num_reads=r, overwrite_max_length=max_length, dim_squeeze=True)
+        
+        model = BasicAtt(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1, multi_seq_nr=r)
+        model.load_state_dict(torch.load(model_path))
+        model.eval()
 
-    model.to(device)
-    criterion = nn.CrossEntropyLoss()
-    test_loss, test_accuracy, test_lev_ac = evaluate_model(model, test_loader, criterion, device)
+        model.to(device)
+        criterion = nn.CrossEntropyLoss()
+        test_loss, test_accuracy, test_lev_ac = evaluate_model(model, test_loader, criterion, device)
 
-    test_lev_accuracies.append(test_lev_ac)
+        # Speichere die Levenshtein-Test-Genauigkeiten in der Struktur
+        test_lev_accuracies[r].append(test_lev_ac)
+
+
+
+
+
+    
 
 # Create the plot
 plt.figure(figsize=(10, 6))
-plt.scatter(seqs, test_lev_accuracies)
 
-# Add labels to each point
-for i, (seq, lev_ac, label) in enumerate(zip(seqs, test_lev_accuracies, labels)):
-    plt.annotate(label, (seq, lev_ac), textcoords="offset points", xytext=(10, 10), ha='center')
+
+for r in nr:
+    plt.scatter(seqs, test_lev_accuracies[r])
+        
 
 plt.xlabel('Sequence Length')
 plt.ylabel('Test Levenshtein Accuracy')
 plt.title('Test Levenshtein Accuracy vs. Sequence Length')
+plt.legend(["1 - Input","2 - Input","5 - Input","10 - Input"])
 plt.grid(True)
 plt.show()

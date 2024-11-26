@@ -53,9 +53,10 @@ class BasicAtt(nn.Module):
         return n_params
     
     def train_model(self, train_loader, num_epochs=10, learning_rate=0.001,
-                     device=None, test_set= None, save_path = None):
+                     device=None, test_set= None, save_path = None, lr_end = 0.00001):
         criterion = nn.CrossEntropyLoss()  # Define loss function
         optimizer = optim.Adam(self.parameters(), lr=learning_rate)  # Define optimizer
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=num_epochs, eta_min=lr_end)
         loss_ = []
         accuracy_= []
         ham_acc_ = []
@@ -105,10 +106,11 @@ class BasicAtt(nn.Module):
 
             if test_set:
                 _,_,test_ac = evaluate_model(self,test_set,criterion,device)
-                if test_ac > min(test_acc_):
+                if test_ac > max(test_acc_):
                     torch.save(self.state_dict(),save_path)
                 test_acc_.append(test_ac)
-                
+
+            scheduler.step()    
 
             avg_ham = ham_loss/ (total_predictions/ self.tar_len)
             avg_loss = epoch_loss / len(train_loader)
@@ -118,7 +120,7 @@ class BasicAtt(nn.Module):
             accuracy_.append(accuracy)
             ham_acc_.append(ham_ac)
 
-            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%,  Lev-Accuracy: {ham_ac:.2f}% ,  Lev-Test-Accuracy: {test_ac:.2f}%")
+            print(f"Epoch [{epoch + 1}/{num_epochs}], Loss: {avg_loss:.4f}, Accuracy: {accuracy:.2f}%,  Lev-Accuracy: {ham_ac:.2f}% ,LR: {scheduler.get_last_lr()[0]:.6f},  Lev-Test-Accuracy: {test_ac:.2f}%")
 
         print("Training complete!")
         return loss_, accuracy_,ham_acc_, test_acc_
