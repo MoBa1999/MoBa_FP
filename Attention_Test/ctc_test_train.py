@@ -17,11 +17,13 @@ from eval_utils import plot_training_curves_separate
 
 # Train Paramaters
 batch_size = 16
-num_reads = 5
+num_reads = 1
 learning_rate = 0.001
-n_heads = 4
+n_heads = 16
+at_dim = 256
+at_layer = 2
 dim_squeeze = True
-train_seqs = 2000
+train_seqs = 70000
 test_seqs = 1000
 num_epochs = 200
 plot_dir = f"/media/hdd1/MoritzBa/Plots/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
@@ -31,6 +33,8 @@ Training Process Details of Multi CTC Training:
 -------------------------
 Batch Size: {batch_size}
 Heads : {n_heads}
+At Dim : {at_dim}
+Attention Layers : {at_layer}
 Number of Reads: {num_reads}
 Number of Epochs: {num_epochs}
 Start Learning Rate: {learning_rate}
@@ -47,8 +51,8 @@ max_2, test_loader = get_data_loader(data_path,end_sequence=train_seqs+test_seqs
 
 
 #Create Model and Train
-model = CTC_Test_Model(input_length=max_length, tar_length=200, conv_1_dim=16,conv_2_dim=48, attention_dim=64, num_reads=num_reads,
-                 n_heads = n_heads)
+model = CTC_Test_Model(input_length=max_length, tar_length=200, conv_1_dim=32,conv_2_dim=48, attention_dim=at_dim, num_reads=num_reads,
+                 n_heads = n_heads, at_layer = at_layer)
 losses,n_accuracies, ham_accuracies,test_accs = model.train_model(train_loader, num_epochs=num_epochs, learning_rate=learning_rate,
                                                                    device=device, test_set=test_loader, save_path=output_dir_model,scheduler_type="cosine_restart")
     

@@ -33,6 +33,7 @@ class MultiCTC(nn.Module):
         self.tar_length = tar_length
         self.tar_len_multiple = tar_len_multiple
         self.classes = classes
+        print("Multi-CTC Model was initialized.")
 
     def forward(self, x):
         batch_size, num_sequences, seq_length = x.size()  # Expected shape: [batch_size, 10, seq_length, 1]
@@ -177,10 +178,10 @@ class MultiCTC(nn.Module):
                     f"Test-Lev-Accuracy: {test_acc:.2f}")
             
             if avg_loss <= 0.001:
-                print("Training completed early!")
-                return loss_, ham_dist_, accs_
+                print(f"Training completed early! -> Maximum Test Accuracy: {max(test_accs)}")
+                return loss_, ham_dist_, accs_, test_accs
 
-        print("Training complete!")
+        print(f"Training completed early! -> Maximum Test Accuracy: {max(test_accs)}")
         return loss_, ham_dist_, accs_, test_accs
 
 

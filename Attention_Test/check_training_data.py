@@ -8,7 +8,7 @@ import pyslow5
 def plot_squigulator(fasta_folder, blow5_folder, reads_per_sequence):
 
     
-    input_file = f"{fasta_folder}/fasta_file_{7}.fasta"
+    input_file = f"{fasta_folder}/fasta_file_{1000}.fasta"
     for j in range (reads_per_sequence):
         output_file = f"{blow5_folder}/seq_{2}_read_{j}.blow5"
         # Command to be executed
@@ -34,7 +34,7 @@ signals = []
 seqs = []
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 
-sequence = 7 #7000 zum trainieren
+sequence = 1000 #7000 zum trainieren
 num_reads = [0]
 for j in num_reads:
     # Load signal and pad to max_length
@@ -44,7 +44,7 @@ for j in num_reads:
 
 
 
-plt.xlim(0,200)
+plt.xlim(0,400)
 plt.show()
         
 

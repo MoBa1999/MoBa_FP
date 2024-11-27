@@ -7,7 +7,7 @@ from eval_utils import evaluate_model_ham
 
 class CTC_Test_Model(nn.Module):
     def __init__(self, input_length, tar_length, classes = 5, conv_1_dim = 10, conv_2_dim = 20,attention_dim =40,
-                  tar_len_multiple=2, num_reads = 1, n_heads = 8):
+                  tar_len_multiple=2, num_reads = 1, n_heads = 8, at_layer =1):
         super(CTC_Test_Model, self).__init__()
 
         # 1D Convolutional Layers for each input sequence
@@ -21,9 +21,9 @@ class CTC_Test_Model(nn.Module):
         # Max Pooling layer to reduce length by half
         self.max_pool = nn.MaxPool2d(kernel_size=(1, 2))
         
-        # Attention layers
-        self.attention1 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
-        self.attention2 = nn.MultiheadAttention(embed_dim=attention_dim, num_heads=n_heads)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=attention_dim, nhead=n_heads)
+        #Transformer Encoder with multiple layers
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=at_layer)
         
         self.flatten = nn.Flatten(start_dim=1)  # Flatten starting from channel dimension
         # Feedforward layers
@@ -33,7 +33,7 @@ class CTC_Test_Model(nn.Module):
         self.tar_length = tar_length
         self.tar_len_multiple = tar_len_multiple
         self.classes = classes
-        print("Multi-CTC Model was initialized.")
+        print(f"CTC Test Model was initialized with {self.get_num_params()} Parameters.")
 
     def forward(self, x):
         batch_size, num_sequences, seq_length = x.size()  # Expected shape: [batch_size, 10, seq_length, 1]
@@ -49,9 +49,7 @@ class CTC_Test_Model(nn.Module):
         # Reshape for attention layers
         x = x.permute(2,0,1)  # [reduced_length * num_sequences, batch_size, channels]
 
-        # Apply attention layers
-        x, _ = self.attention1(x, x, x)
-        x, _ = self.attention2(x, x, x)
+        self.transformer(x)
         x = x.permute(1,0,2)
         # Feedforward layers
         x = self.flatten(x)
@@ -178,10 +176,10 @@ class CTC_Test_Model(nn.Module):
                     f"Test-Lev-Accuracy: {test_acc:.2f}")
             
             if avg_loss <= 0.001:
-                print("Training completed early!")
-                return loss_, ham_dist_, accs_
+                print(f"Training completed early! -> Maximum Test Accuracy: {max(test_accs)}")
+                return loss_, ham_dist_, accs_, test_accs
 
-        print("Training complete!")
+        print(f"Training completed early! -> Maximum Test Accuracy: {max(test_accs)}")
         return loss_, ham_dist_, accs_, test_accs
 
 

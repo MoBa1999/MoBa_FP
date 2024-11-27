@@ -16,12 +16,12 @@ from eval_utils import plot_training_curves_separate
 
 # Train Paramaters
 batch_size = 16
-num_reads = 5
-learning_rate = 0.001
+num_reads = 10
+learning_rate = 0.002
 dim_squeeze = True
 train_seqs = 5000
 test_seqs = 5000
-num_epochs = 200
+num_epochs = 500
 plot_dir = f"/media/hdd1/MoritzBa/Plots/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
 output_dir_model = f"/media/hdd1/MoritzBa/Models/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.pth"
 print(f"""
