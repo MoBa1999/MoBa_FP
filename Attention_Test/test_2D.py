@@ -1,5 +1,6 @@
 from TransCTCMultiModel import MultiCTC
 from CTC_Test import CTC_Test_Model
+from CTC_2D import CTC_2D_Model
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -23,11 +24,11 @@ n_heads = 16
 at_dim = 16
 at_layer = 2
 dim_squeeze = True
-train_seqs = 40000
+train_seqs = 20000
 test_seqs = 2500
 num_epochs = 10
-plot_dir = f"/media/hdd1/MoritzBa/Plots/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
-output_dir_model = f"/media/hdd1/MoritzBa/Models/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.pth"
+plot_dir = f"/media/hdd1/MoritzBa/Plots/2D_CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
+output_dir_model = f"/media/hdd1/MoritzBa/Models/2D_CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.pth"
 print(f"""
 Training Process Details of Multi CTC Training:
 -------------------------
@@ -51,7 +52,7 @@ max_2, test_loader = get_data_loader(data_path,end_sequence=train_seqs+test_seqs
 
 
 #Create Model and Train
-model = CTC_Test_Model(input_length=max_length, tar_length=200, conv_1_dim=32,conv_2_dim=32, attention_dim=at_dim, num_reads=num_reads,
+model = CTC_2D_Model(input_length=max_length, tar_length=200, conv_1_dim=32,conv_2_dim=32, attention_dim=at_dim, num_reads=num_reads,
                  n_heads = n_heads, at_layer = at_layer)
 losses,n_accuracies, ham_accuracies,test_accs = model.train_model(train_loader, num_epochs=num_epochs, learning_rate=learning_rate,
                                                                    device=device, test_set=test_loader, save_path=output_dir_model,scheduler_type="cosine_restart")

@@ -18,10 +18,12 @@ model_path_general = "/media/hdd1/MoritzBa/Models"
 
 test_lev_accuracies = {}
 
-seqs = [10000, 20000, 40000]
-nr = [1, 2, 5, 10]
+seqs = [70000]
+nr = [10]
 device = get_device(gpu_index=1)
-max_length = 2000
+max_length = 2100
+
+#CTC_70000_s_200_ep_10_r
 
 # Initialisiere die Struktur
 for r in nr:
@@ -29,7 +31,7 @@ for r in nr:
 
 for seq in seqs:
     for r in nr:
-        model_name = f"{seq}_s_75_ep_{r}_r.pth"
+        model_name = f"CTC_{seq}_s_200_ep_{r}_r.pth"
         model_path = os.path.join(model_path_general, model_name)
         print(f"The following model is analyzed: {model_path}")
         
@@ -57,12 +59,12 @@ plt.figure(figsize=(10, 6))
 
 
 for r in nr:
-    plt.scatter(seqs, test_lev_accuracies[r])
+    plt.scatter(seqs, test_lev_accuracies[r], label = f"")
         
 
 plt.xlabel('Sequence Length')
 plt.ylabel('Test Levenshtein Accuracy')
 plt.title('Test Levenshtein Accuracy vs. Sequence Length')
-plt.legend(["1 - Input","2 - Input","5 - Input","10 - Input"])
+plt.legend()
 plt.grid(True)
 plt.show()
