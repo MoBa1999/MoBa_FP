@@ -9,6 +9,7 @@ import torch
 from torch import nn
 import matplotlib.pyplot as plt
 from Simple_Attention import BasicAtt
+from CTC_Test import CTC_Test_Model
 
 #test_path = "/media/hdd1/MoritzBa/Test_Data/Rd_Data_Numpy"
 test_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
@@ -37,7 +38,7 @@ for seq in seqs:
         
         _, test_loader = get_data_loader(test_path, end_sequence=42000,start_sequence=40000, batch_size=32, num_reads=r, overwrite_max_length=max_length, dim_squeeze=True)
         
-        model = BasicAtt(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1, multi_seq_nr=r)
+        model = CTC_Test_Model(input_length=max_length, tar_length=200, d_model=64, max_pool_id=1, multi_seq_nr=r)
         model.load_state_dict(torch.load(model_path))
         model.eval()
 

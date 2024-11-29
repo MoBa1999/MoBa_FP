@@ -17,13 +17,13 @@ from eval_utils import plot_training_curves_separate
 
 # Train Paramaters
 batch_size = 16
-num_reads = 10
+num_reads = 1
 learning_rate = 0.001
-n_heads = 16
-at_dim = 16
+n_heads = 32
+at_dim = 64
 at_layer = 2
 dim_squeeze = True
-train_seqs = 40000
+train_seqs = 100000
 test_seqs = 2500
 num_epochs = 10
 plot_dir = f"/media/hdd1/MoritzBa/Plots/CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
@@ -44,14 +44,14 @@ Testing Sequences: {test_seqs}
 """)
 #Prep
 device = get_device(gpu_index=1)
-data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
+data_path = "/media/hdd1/MoritzBa/Big_Data/Rd_Data_Numpy"
 max_length = 2100
 max_length, train_loader = get_data_loader(data_path,train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze=True, overwrite_max_length = max_length)
 max_2, test_loader = get_data_loader(data_path,end_sequence=train_seqs+test_seqs,start_sequence=train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze= True, overwrite_max_length= max_length)
 
 
 #Create Model and Train
-model = CTC_Test_Model(input_length=max_length, tar_length=200, conv_1_dim=32,conv_2_dim=32, attention_dim=at_dim, num_reads=num_reads,
+model = CTC_Test_Model(input_length=max_length, tar_length=200, conv_1_dim=32,conv_2_dim=64, attention_dim=at_dim, num_reads=num_reads,
                  n_heads = n_heads, at_layer = at_layer)
 losses,n_accuracies, ham_accuracies,test_accs = model.train_model(train_loader, num_epochs=num_epochs, learning_rate=learning_rate,
                                                                    device=device, test_set=test_loader, save_path=output_dir_model,scheduler_type="cosine_restart")
