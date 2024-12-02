@@ -5,7 +5,7 @@ import numpy as np
 def get_device(gpu_index=1):
     if torch.cuda.is_available() and gpu_index < torch.cuda.device_count():
         device = torch.device(f'cuda:{gpu_index}')  # Use GPU with the specified index
-        print(f"Using GPU: {torch.cuda.get_device_name(gpu_index)}")
+        print(f"Using GPU: {torch.cuda.get_device_name(gpu_index)} with index {gpu_index}")
     else:
         device = torch.device('cpu')  # Fall back to CPU if GPU is not available or invalid index
         print("Using CPU")
@@ -59,63 +59,71 @@ def vectors_to_sequence(vectors):
     sequence = ''.join([vector_to_base(vec) for vec in vectors])
     return sequence
 
-def get_data_loader(data_path_numpy,end_sequence,batch_size = 16,start_sequence = 0, num_reads = 10, overwrite_max_length = None, dim_squeeze=False):
+def get_data_loader(data_path_numpy, end_sequence, batch_size=16, start_sequence=0, overwrite_max_length=None, dim_squeeze=False, num_reads=1):
     signals = []
     seqs = []
 
-
     # Find the maximum length across all signals for padding
     max_length = 0
-    for i in range(start_sequence,end_sequence):
-        for j in range(num_reads):
-            try:
-              signal = np.load(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy")
-              max_length = max(max_length, signal.shape[0])
-            except:
-               print(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy - Could not be found, going on with next")
-    print(f"{max_length} is the longest length of a read for dataset with {end_sequence-start_sequence} Sequences")
+    for i in range(start_sequence, end_sequence):
+        try:
+            # Load all signals for the sequence
+            sequence_signals = np.load(f"{data_path_numpy}/signal_seq_{i}.npy")
+            # Find the longest signal in the current sequence
+            max_length = max(max_length, max(signal.shape[0] for signal in sequence_signals))
+        except FileNotFoundError:
+            print(f"{data_path_numpy}/signal_seq_{i}.npy - Signal file not found, skipping sequence.")
+    
+    print(f"{max_length} is the longest length of a read in the dataset with {end_sequence - start_sequence} sequences.")
 
     if overwrite_max_length:
         if overwrite_max_length > max_length:
-            print("Max Length is overwritten")
+            print("Max Length is overwritten.")
             max_length = overwrite_max_length
 
     # Load, pad, and store signals and sequences
     for i in range(start_sequence, end_sequence):
-        #List initialized
-        sequence_signals = []
+        try:
+            # Load target sequence
+            seq = np.load(f"{data_path_numpy}/signal_seq_{i}_tarseq.npy")
+        except FileNotFoundError:
+            print(f"{data_path_numpy}/signal_seq_{i}_tarseq.npy - Target sequence file not found, skipping sequence.")
+            continue
 
         try:
-          seq = np.load(f"{data_path_numpy}/signal_seq_{i}_read_{0}_tarseq.npy")
-        except:
-           print(f"{data_path_numpy}/signal_seq_{i}_read_{0}_tarseq.npy - Sequence not found")
-        for j in range(num_reads):
-            try:
-              # Load signal and pad to max_length
-              signal = np.load(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy")
-            except:
-               print(f"{data_path_numpy}/signal_seq_{i}_read_{j}.npy - Data not found.")
-               continue
-            # Normalize the signal
+            # Load all signals for the sequence
+            sequence_signals = np.load(f"{data_path_numpy}/signal_seq_{i}.npy")
+            sequence_signals = sequence_signals[0:num_reads,:]
+        except FileNotFoundError:
+            print(f"{data_path_numpy}/signal_seq_{i}.npy - Signal file not found, skipping sequence.")
+            continue
+
+        # Normalize and pad each signal in the sequence
+        padded_signals = []
+        for signal in sequence_signals:
             mean = np.mean(signal)
             std = np.std(signal)
             normalized_signal = (signal - mean) / std
-            
+
             # Pad to max_length
             padding_length = max_length - normalized_signal.shape[0]
             padded_signal = np.pad(normalized_signal, (0, padding_length), mode='constant', constant_values=0)
-            sequence_signals.append(padded_signal)
-            
-        # Load target sequence
-        signals.append(sequence_signals)       
+            padded_signals.append(padded_signal)
+
+        # Add the padded signals and target sequence to the respective lists
+        signals.append(padded_signals)
         seqs.append(seq)
 
-    # Convert lists to arrays
-    signals = torch.from_numpy(np.array(signals))
-    seqs = torch.from_numpy(np.array(seqs))
-    signals = signals.view(signals.shape[0], signals.shape[1], signals.shape[2], 1).float()
+    # Convert lists to tensors
+    signals = torch.from_numpy(np.array(signals)).float()  # Shape: (num_sequences, num_reads, max_length)
+    seqs = torch.from_numpy(np.array(seqs)).float()  # Shape: (num_sequences, sequence_length, feature_dim)
+
+    # Adjust the signal tensor shape to match expected dimensions
+    signals = signals.unsqueeze(-1)  # Add a channel dimension: (num_sequences, num_reads, max_length, 1)
     if dim_squeeze:
-        signals = signals.squeeze(3)
+        signals = signals.squeeze(3)  # Remove the last dimension if requested
+
+    # Create TensorDataset and DataLoader
     dataset = TensorDataset(signals, seqs)
     train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 

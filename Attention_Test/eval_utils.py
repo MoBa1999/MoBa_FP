@@ -194,4 +194,4 @@ def show_im(path):
 #plot_training_and_test_metrics("/workspaces/MoBa_FP/Experiments/Exp_real_1", label="Real Data - 1 Input CTC Loss")
 #show_im("/media/hdd1/MoritzBa/Plots/10000_s_75_ep.png")
 #show_im("/media/hdd1/MoritzBa/Plots/40000_s_75_ep_1_r.png")
-show_im("/media/hdd1/MoritzBa/Plots/CTC_70000_s_200_ep_10_r.png")
+show_im("/media/hdd1/MoritzBa/Plots/CTC_70000_s_100_ep_1_r.png")

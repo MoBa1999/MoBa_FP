@@ -30,7 +30,7 @@ def calculate_average_correlation(sequences):
 seqs = []
 data_path = "/media/hdd1/MoritzBa/Rd_Data_Numpy"
 
-sequences = 10
+sequences = 5000
 correlations = []
 for i in range(sequences):
     num_reads = [1,2,3,4,5,6,7,8,9]
@@ -44,7 +44,7 @@ for i in range(sequences):
 # Plotting the histogram
 plt.figure(figsize=(10, 6))
 plt.hist(correlations, bins=30, edgecolor='black', alpha=0.7)  # Adjust the number of bins as needed
-plt.title('Histogram of Average Correlations')
+plt.title('Histogram of Correlations Values')
 plt.xlabel('Correlation Value')
 plt.ylabel('Frequency')
 plt.grid(True)

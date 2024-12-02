@@ -21,16 +21,16 @@ batch_size = 16
 num_reads = 20
 learning_rate = 0.001
 n_heads = 16
-at_dim = 16
-at_layer = 2
+at_dim = 32
+at_layer = 3
 dim_squeeze = True
-train_seqs = 100000
+train_seqs = 250000
 test_seqs = 2500
-num_epochs = 10
+num_epochs = 50
 plot_dir = f"/media/hdd1/MoritzBa/Plots/2D_CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.png"
 output_dir_model = f"/media/hdd1/MoritzBa/Models/2D_CTC_{train_seqs}_s_{num_epochs}_ep_{num_reads}_r.pth"
 print(f"""
-Training Process Details of Multi CTC Training:
+Training Process Details of Multi CTC 2D Training:
 -------------------------
 Batch Size: {batch_size}
 Heads : {n_heads}
@@ -44,7 +44,7 @@ Training Sequences: {train_seqs}
 Testing Sequences: {test_seqs}
 """)
 #Prep
-device = get_device(gpu_index=1)
+device = get_device(gpu_index=0)
 data_path = "/media/hdd1/MoritzBa/Big_Data/Rd_Data_Numpy"
 max_length = 2100
 max_length, train_loader = get_data_loader(data_path,train_seqs, batch_size = batch_size, num_reads=num_reads, dim_squeeze=True, overwrite_max_length = max_length)
